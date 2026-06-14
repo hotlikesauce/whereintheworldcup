@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WhereInTheWorldCup — Question Review</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root{
+    --bg:#0a140d; --panel:#102018; --panel2:#16291e; --border:#234132;
+    --ink:#eaf3ec; --ink-mid:#bcd1c2; --ink-dim:#7f9a87;
+    --gold:#f4c430; --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --pitch:#0b8a43;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; font-size:14px;}
+  header{position:sticky; top:0; z-index:10; background:#081009;
+    border-bottom:1px solid var(--border); padding:10px 16px;
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px;}
+  header h1{font-size:16px; margin:0; letter-spacing:.04em; text-transform:uppercase; color:var(--gold)}
+  .counts{display:flex; gap:14px; font-size:13px}
+  .counts b{font-variant-numeric:tabular-nums}
+  .c-pass{color:var(--green)} .c-rev{color:var(--amber)} .c-rem{color:var(--ink-dim)}
+  .spacer{flex:1}
+  select, button{font:inherit; cursor:pointer; border-radius:6px; border:1px solid var(--border);
+    background:var(--panel2); color:var(--ink); padding:7px 12px}
+  button:hover{border-color:var(--ink-dim)}
+  button.primary{background:var(--gold); color:#1a1408; border-color:var(--gold); font-weight:700}
+  .toolbtn{font-size:12px; padding:6px 10px}
+
+  #dots{display:flex; flex-wrap:wrap; gap:3px; padding:10px 16px; border-bottom:1px solid var(--border); background:#081009; max-height:96px; overflow:auto}
+  .dot{width:12px; height:12px; border-radius:3px; background:#234132; cursor:pointer; flex:0 0 auto}
+  .dot.pass{background:var(--green)}
+  .dot.review{background:var(--amber)}
+  .dot.current{outline:2px solid var(--gold); outline-offset:1px}
+
+  main{max-width:1040px; margin:0 auto; padding:18px 16px 96px}
+  .idx{font-size:13px; color:var(--ink-dim); letter-spacing:.05em}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:8px}
+  @media(max-width:760px){ .grid{grid-template-columns:1fr} }
+
+  #map{height:320px; border:1px solid var(--border); border-radius:8px; background:#06100a}
+  .photo-wrap{margin-top:12px; position:relative; background:#06100a; border:1px solid var(--border);
+    border-radius:8px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center}
+  .photo-wrap img{width:100%; height:100%; object-fit:cover; display:block}
+  .photo-status{position:absolute; color:var(--ink-dim); font-size:12px; letter-spacing:.1em; text-transform:uppercase}
+
+  .meta h2{margin:0 0 2px; font-size:24px; line-height:1.15}
+  .meta .sub{color:var(--ink-mid); margin-bottom:10px; font-size:13px}
+  .badge{display:inline-block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    background:var(--pitch); color:#fff; padding:2px 8px; border-radius:4px; vertical-align:middle; margin-left:6px}
+  .badge.d1{background:#2563eb} .badge.d2{background:#7c3aed} .badge.d3{background:#be123c}
+  .links{display:flex; gap:12px; margin:6px 0 14px; font-size:13px}
+  .links a{color:var(--gold)}
+
+  .blocks{display:flex; flex-direction:column; gap:8px}
+  .blk{background:var(--panel); border:1px solid var(--border); border-radius:7px; padding:8px 11px}
+  .blk .lbl{font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-dim); display:block; margin-bottom:3px}
+  .blk.prompt{background:rgba(11,138,67,.14); border-color:#1d4a34}
+  .blk .val{line-height:1.45}
+  .blk.win{background:rgba(244,196,48,.10); border-color:#5a4d1e}
+  .raw{font-style:italic; color:var(--ink-mid); font-size:13px}
+
+  .decide{position:fixed; bottom:0; left:0; right:0; background:#081009; border-top:1px solid var(--border);
+    padding:10px 16px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; z-index:10}
+  .decide .big{font-size:15px; font-weight:700; padding:10px 20px}
+  .btn-pass{background:var(--green); color:#08220f; border-color:var(--green)}
+  .btn-review{background:var(--amber); color:#2a1c02; border-color:var(--amber)}
+  .btn-pass.off,.btn-review.off{opacity:.45}
+  .fixes{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .chk{display:flex; align-items:center; gap:5px; padding:7px 11px; border:1px solid var(--border);
+    border-radius:6px; background:var(--panel2); user-select:none; font-size:12px}
+  .chk.on{border-color:var(--gold); background:#3a2f12}
+  .chk input{accent-color:var(--gold)}
+  .note{flex:1; min-width:160px; background:var(--panel); border:1px solid var(--border); color:var(--ink);
+    border-radius:6px; padding:8px 10px; font:inherit}
+  .nav{display:flex; gap:8px}
+  .hintbar{font-size:12px; color:var(--ink-dim); width:100%}
+
+  #modal{display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:50; align-items:center; justify-content:center; padding:20px}
+  #modal .box{background:var(--panel); border:1px solid var(--border); border-radius:10px; max-width:760px; width:100%; max-height:85vh; overflow:auto; padding:18px}
+  #modal h3{margin:0 0 10px}
+  #modal textarea{width:100%; height:240px; background:#06100a; color:var(--ink); border:1px solid var(--border); border-radius:6px; padding:10px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px}
+  .rev-row{display:flex; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px; align-items:baseline}
+  .rev-row .tags{color:var(--amber); font-size:11px; text-transform:uppercase; letter-spacing:.05em}
+  .rev-row a{color:var(--gold); cursor:pointer}
+  kbd{background:#000; border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:11px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Question Review</h1>
+  <div class="counts">
+    <span class="c-pass">Pass <b id="n-pass">0</b></span>
+    <span class="c-rev">Review <b id="n-review">0</b></span>
+    <span class="c-rem">Left <b id="n-rem">0</b></span>
+  </div>
+  <div class="spacer"></div>
+  <select id="filter" onchange="applyFilter()" title="Filter">
+    <option value="all">All</option>
+    <option value="unreviewed">Unreviewed</option>
+    <option value="review">Flagged</option>
+    <option value="d1">Difficulty 1</option>
+    <option value="d2">Difficulty 2</option>
+    <option value="d3">Difficulty 3</option>
+  </select>
+  <button class="toolbtn" onclick="jumpNextUnreviewed()">Next unreviewed →</button>
+  <button class="toolbtn" onclick="openExport()">Export</button>
+  <button class="toolbtn" onclick="resetAll()">Reset</button>
+</header>
+
+<div id="dots"></div>
+
+<main>
+  <div class="idx" id="idx">—</div>
+  <div class="grid">
+    <div>
+      <div id="map"></div>
+      <div class="photo-wrap">
+        <img id="photo" alt="" style="display:none" />
+        <div class="photo-status" id="photo-status">No photo</div>
+      </div>
+    </div>
+    <div class="meta">
+      <h2 id="name">—<span class="badge" id="cat-badge"></span><span class="badge" id="diff-badge"></span></h2>
+      <div class="sub"><span id="answer"></span> · <span id="coords" style="color:var(--ink-dim)"></span></div>
+      <div class="links">
+        <a id="map-link" target="_blank" rel="noopener">📍 Google Maps</a>
+        <a id="wiki-link" target="_blank" rel="noopener">🔎 Search</a>
+      </div>
+      <div class="blocks" id="blocks"></div>
+    </div>
+  </div>
+</main>
+
+<div class="decide">
+  <button class="big btn-pass" id="btn-pass" onclick="setStatus('pass')">PASS</button>
+  <button class="big btn-review" id="btn-review" onclick="setStatus('review')">REVIEW</button>
+  <div class="fixes">
+    <label class="chk" id="chk-prompt"><input type="checkbox" id="fix-prompt" onchange="toggleFix('prompt',this.checked)"> Fix prompt</label>
+    <label class="chk" id="chk-coords"><input type="checkbox" id="fix-coords" onchange="toggleFix('coords',this.checked)"> Fix coords</label>
+    <label class="chk" id="chk-diff"><input type="checkbox" id="fix-diff" onchange="toggleFix('difficulty',this.checked)"> Fix difficulty</label>
+  </div>
+  <input class="note" id="note" placeholder="Note (optional)…" oninput="saveNote(this.value)" />
+  <div class="nav">
+    <button onclick="go(-1)">← Prev</button>
+    <button class="primary" onclick="go(1)">Next →</button>
+  </div>
+  <div class="hintbar">Shortcuts: <kbd>P</kbd> pass · <kbd>R</kbd> review · <kbd>1</kbd> prompt · <kbd>2</kbd> coords · <kbd>3</kbd> difficulty · <kbd>←</kbd>/<kbd>→</kbd> navigate</div>
+</div>
+
+<div id="modal" onclick="if(event.target.id==='modal')closeExport()">
+  <div class="box">
+    <h3>Questions flagged for review (<span id="exp-count">0</span>)</h3>
+    <div id="rev-list"></div>
+    <h3 style="margin-top:16px">Export flagged JSON</h3>
+    <textarea id="exp-json" readonly></textarea>
+    <div style="margin-top:10px; display:flex; gap:8px">
+      <button class="primary" onclick="copyExport()">Copy JSON</button>
+      <button onclick="downloadExport()">Download .json</button>
+      <button onclick="closeExport()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="items.js"></script>
+<script>
+// ── Persistence ──────────────────────────────────────────────────────────────
+const LS_KEY = 'witwc-review';
+let results = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(results)); }
+function key(it){ return it.name + '|' + it.answer; }
+function rec(it){ return results[key(it)] || (results[key(it)] = { status:null, fixPrompt:false, fixCoords:false, fixDifficulty:false, note:'' }); }
+
+let i = 0;
+let view = ITEMS.map((_, n) => n);   // indices currently shown (filter)
+
+// ── Region hint (mirrors game.js) ────────────────────────────────────────────
+function getRegionHint(country){
+  const c = country.toLowerCase();
+  if (/usa|canada|mexico|cuba|guatemala|panama|costa rica|honduras|nicaragua|belize|haiti|cura|jamaica|dominican|trinidad/.test(c)) return 'North or Central America';
+  if (/peru|bolivia|chile|brazil|argentina|ecuador|colombia|venezuela|uruguay|paraguay|guiana|guyana|suriname/.test(c)) return 'South America';
+  if (/uk|united kingdom|england|scotland|wales|northern ireland|france|spain|italy|germany|greece|croatia|czech|hungary|poland|estonia|latvia|lithuania|austria|belgium|norway|sweden|finland|denmark|iceland|netherlands|portugal|switzerland|romania|bulgaria|montenegro|bosnia|north macedonia|serbia|slovenia|slovakia|ukraine|malta|ireland|vatican|luxembourg/.test(c)) return 'Europe';
+  if (/turkey|türkiye/.test(c)) return 'Turkey';
+  if (/russia/.test(c)) return 'Russia';
+  if (/egypt|morocco|tunisia|algeria|libya|sudan|senegal|mali|ethiopia|kenya|tanzania|uganda|rwanda|zimbabwe|zambia|botswana|namibia|mozambique|madagascar|nigeria|ghana|ivory coast|cote|cameroon|cape verde|cabo verde|angola|south africa/.test(c)) return 'Africa';
+  if (/jordan|israel|palestine|iran|iraq|saudi|united arab emirates|uae|qatar|oman|kuwait|bahrain|lebanon|syria|yemen/.test(c)) return 'the Middle East';
+  if (/uzbekistan|kazakhstan|turkmenistan|tajikistan|kyrgyzstan/.test(c)) return 'Central Asia';
+  if (/india|sri lanka|nepal|bhutan|bangladesh|pakistan|afghanistan|maldives/.test(c)) return 'South Asia';
+  if (/china|japan|korea|cambodia|vietnam|laos|myanmar|indonesia|thailand|malaysia|singapore|philippines|taiwan|hong kong|mongolia|brunei/.test(c)) return 'East or Southeast Asia';
+  if (/australia|new zealand|polynesia|fiji|samoa|tahiti|papua|tonga/.test(c)) return 'Oceania';
+  return 'somewhere in the world';
+}
+
+// ── Map ──────────────────────────────────────────────────────────────────────
+const map = L.map('map', { center:[20,0], zoom:2, worldCopyJump:true, zoomControl:true });
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  { attribution:'© Esri', maxZoom:19 }).addTo(map);
+let marker = null;
+function showOnMap(it){
+  if(marker) marker.remove();
+  marker = L.marker([it.lat, it.lng]).addTo(map);
+  map.setView([it.lat, it.lng], it.winCountry ? 5 : 9);
+  setTimeout(()=>map.invalidateSize(), 50);
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function cur(){ return ITEMS[view[i]]; }
+
+function render(){
+  if(!view.length){ document.getElementById('idx').textContent='No items match filter'; return; }
+  i = Math.min(view.length-1, Math.max(0, i));
+  const it = cur();
+  document.getElementById('idx').textContent = `Question ${view[i]+1} of ${ITEMS.length}` + (view.length<ITEMS.length?` (showing ${i+1}/${view.length})`:'');
+  document.getElementById('name').firstChild.textContent = it.name;
+
+  const cb = document.getElementById('cat-badge');
+  cb.textContent = it.category || '—';
+  const db = document.getElementById('diff-badge');
+  db.textContent = 'D' + (it.difficulty||'?');
+  db.className = 'badge d' + (it.difficulty||0);
+
+  document.getElementById('answer').textContent = it.answer || '';
+  document.getElementById('coords').textContent = `${(+it.lat).toFixed(4)}, ${(+it.lng).toFixed(4)}` + (it.radius?` · r=${it.radius}km`:'');
+  document.getElementById('map-link').href = `https://www.google.com/maps/search/?api=1&query=${it.lat},${it.lng}`;
+  document.getElementById('wiki-link').href = `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(it.name)}`;
+
+  // photo
+  const img=document.getElementById('photo'), ps=document.getElementById('photo-status');
+  if(it.photo){
+    img.style.display='none'; ps.style.display='block'; ps.textContent='Loading…';
+    img.onload=()=>{ ps.style.display='none'; img.style.display='block'; };
+    img.onerror=()=>{ ps.textContent='⚠ Photo failed to load'; img.style.display='none'; };
+    img.src=it.photo;
+  } else {
+    img.style.display='none'; ps.style.display='block'; ps.textContent='No photo (trivia-only)';
+  }
+
+  // blocks — exactly what the game reveals
+  const blocks = [
+    {lbl:'Prompt (shown while guessing)', cls:'prompt', val:it.prompt||'<i>missing</i>'},
+    {lbl:'Hint 1 — Region · cap 75', val:getRegionHint(it.country||'')},
+    {lbl:'Hint 2 — Country · cap 25', val:it.country||'<i>missing</i>'},
+  ];
+  if(it.winCountry) blocks.push({lbl:'Anywhere-in-country win', cls:'win', val:`Pin anywhere in <b>${it.winCountry}</b> = full 100`});
+  blocks.push({lbl:'Reveal fact', val:`<span class="raw">${it.fact||'<i>none</i>'}</span>`});
+  document.getElementById('blocks').innerHTML = blocks.map(b=>
+    `<div class="blk ${b.cls||''}"><span class="lbl">${b.lbl}</span><span class="val">${b.val}</span></div>`).join('');
+
+  showOnMap(it);
+  syncDecision();
+  renderDots();
+}
+
+function syncDecision(){
+  const r = rec(cur());
+  document.getElementById('btn-pass').classList.toggle('off', r.status!=='pass');
+  document.getElementById('btn-review').classList.toggle('off', r.status!=='review');
+  document.getElementById('fix-prompt').checked = r.fixPrompt;
+  document.getElementById('fix-coords').checked = r.fixCoords;
+  document.getElementById('fix-diff').checked = r.fixDifficulty;
+  document.getElementById('chk-prompt').classList.toggle('on', r.fixPrompt);
+  document.getElementById('chk-coords').classList.toggle('on', r.fixCoords);
+  document.getElementById('chk-diff').classList.toggle('on', r.fixDifficulty);
+  document.getElementById('note').value = r.note || '';
+  updateCounts();
+}
+
+// ── Actions ──────────────────────────────────────────────────────────────────
+function setStatus(s){
+  const r = rec(cur());
+  r.status = s;
+  if (s==='pass'){ r.fixPrompt=false; r.fixCoords=false; r.fixDifficulty=false; r.note=''; }
+  save(); syncDecision(); renderDots();
+  if (s==='pass') setTimeout(()=>go(1), 120);
+}
+function toggleFix(kind, on){
+  const r = rec(cur());
+  if(kind==='prompt') r.fixPrompt=on; else if(kind==='coords') r.fixCoords=on; else r.fixDifficulty=on;
+  if(on && r.status!=='review') r.status='review';
+  save(); syncDecision(); renderDots();
+}
+function saveNote(v){ const r=rec(cur()); r.note=v; if(v && r.status!=='pass') r.status='review'; save(); }
+function go(d){ i=Math.min(view.length-1, Math.max(0, i+d)); render(); window.scrollTo(0,0); }
+function jumpToGlobal(n){ const p=view.indexOf(n); if(p>=0){ i=p; render(); window.scrollTo(0,0); } }
+function jumpNextUnreviewed(){
+  for(let k=1;k<=view.length;k++){ const p=(i+k)%view.length; if(!rec(ITEMS[view[p]]).status){ i=p; render(); window.scrollTo(0,0); return; } }
+  alert('All shown questions have a decision. 🎉');
+}
+
+function applyFilter(){
+  const f = document.getElementById('filter').value;
+  view = ITEMS.map((_,n)=>n).filter(n=>{
+    const it=ITEMS[n], r=results[key(it)]||{};
+    if(f==='all') return true;
+    if(f==='unreviewed') return !r.status;
+    if(f==='review') return r.status==='review';
+    if(f==='d1') return it.difficulty===1;
+    if(f==='d2') return it.difficulty===2;
+    if(f==='d3') return it.difficulty===3;
+    return true;
+  });
+  i=0; renderDots(); render();
+}
+
+// ── Counts + dots ────────────────────────────────────────────────────────────
+function updateCounts(){
+  let p=0,r=0;
+  ITEMS.forEach(it=>{ const x=results[key(it)]; if(x&&x.status==='pass')p++; else if(x&&x.status==='review')r++; });
+  document.getElementById('n-pass').textContent=p;
+  document.getElementById('n-review').textContent=r;
+  document.getElementById('n-rem').textContent=ITEMS.length-p-r;
+}
+function renderDots(){
+  const box=document.getElementById('dots');
+  box.innerHTML='';
+  view.forEach((n,p)=>{ const d=document.createElement('div');
+    const st=(results[key(ITEMS[n])]||{}).status;
+    d.className='dot'+(st?(' '+st):'')+(p===i?' current':'');
+    d.title=ITEMS[n].name; d.onclick=()=>{ i=p; render(); window.scrollTo(0,0); };
+    box.appendChild(d); });
+  updateCounts();
+}
+
+// ── Export ───────────────────────────────────────────────────────────────────
+function flaggedList(){
+  return ITEMS.map((it,n)=>({n,it,r:results[key(it)]})).filter(x=>x.r && x.r.status==='review');
+}
+function openExport(){
+  const flagged=flaggedList();
+  document.getElementById('exp-count').textContent=flagged.length;
+  document.getElementById('rev-list').innerHTML = flagged.length ? flagged.map(x=>{
+    const tags=[]; if(x.r.fixPrompt)tags.push('fix prompt'); if(x.r.fixCoords)tags.push('fix coords'); if(x.r.fixDifficulty)tags.push('fix difficulty');
+    return `<div class="rev-row"><a onclick="closeExport();jumpToGlobal(${x.n})">#${x.n+1} ${x.it.name}</a>
+      <span class="tags">${tags.join(' · ')||'flagged'}</span>
+      <span style="color:var(--ink-mid)">${x.r.note?('— '+x.r.note):''}</span></div>`;
+  }).join('') : '<div style="color:var(--ink-dim)">Nothing flagged yet.</div>';
+  const payload = flagged.map(x=>({
+    name:x.it.name, answer:x.it.answer, category:x.it.category, difficulty:x.it.difficulty,
+    fixPrompt:x.r.fixPrompt, fixCoords:x.r.fixCoords, fixDifficulty:x.r.fixDifficulty, note:x.r.note
+  }));
+  document.getElementById('exp-json').value = JSON.stringify(payload, null, 2);
+  document.getElementById('modal').style.display='flex';
+}
+function closeExport(){ document.getElementById('modal').style.display='none'; }
+function copyExport(){ const t=document.getElementById('exp-json'); t.select(); navigator.clipboard?.writeText(t.value); }
+function downloadExport(){
+  const blob=new Blob([document.getElementById('exp-json').value],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='witwc-review.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+function resetAll(){
+  if(!confirm('Clear ALL review decisions? This cannot be undone.')) return;
+  results={}; save(); applyFilter();
+}
+
+// ── Keyboard ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e=>{
+  if(document.activeElement && document.activeElement.tagName==='INPUT' && e.key!=='Escape') return;
+  if(e.key==='Escape') closeExport();
+  else if(e.key==='ArrowRight') go(1);
+  else if(e.key==='ArrowLeft') go(-1);
+  else if(e.key==='p'||e.key==='P') setStatus('pass');
+  else if(e.key==='r'||e.key==='R') setStatus('review');
+  else if(e.key==='1'){ toggleFix('prompt', !rec(cur()).fixPrompt); }
+  else if(e.key==='2'){ toggleFix('coords', !rec(cur()).fixCoords); }
+  else if(e.key==='3'){ toggleFix('difficulty', !rec(cur()).fixDifficulty); }
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Local working notes (not published)
+CLAUDE.md
+
+# Tooling / OS junk
+.claude/
+.DS_Store
+Thumbs.db
+
+# Temp data scratch files
+ne50.json
+s3.json
+countries_tmp.json
+*.tmp

@@ -1,0 +1,600 @@
+// WhereInTheWorldCup data set.
+//
+// Each item is something you pin on the world map from a soccer trivia prompt.
+//   name        – the answer headline shown after you guess
+//   answer      – full location reveal (city, country)
+//   country     – used for the Country hint + region lookup
+//   category    – drives the badge + icon (see CATEGORY_ICONS in game.js)
+//   difficulty  – 1 = obvious, 2 = medium, 3 = hard. Drives which round it can
+//                 appear in: the daily pattern is [1,1,2,3,3], so the first two
+//                 rounds are gimmes and rounds 4-5 are tough.
+//   lat / lng   – the point you are trying to find
+//   prompt      – the trivia clue shown while guessing (gives no map pin away)
+//   fact        – optional extra shown after the reveal
+//   photo       – optional direct image URL (any https://upload.wikimedia.org/.../NNNpx-File.jpg)
+//   radius      – optional km of full-score zone (for large/spread-out answers)
+//
+// Slant: World Cups since 1970, with a few classics from before.
+
+const ITEMS = [
+
+  // ════════ DIFFICULTY 1 — obvious (rounds 1-2) ════════
+  // Giant stadiums in instantly placeable cities.
+
+  { name: "Maracanã", answer: "Rio de Janeiro, Brazil", country: "Brazil",
+    category: "Match Venue", difficulty: 1, lat: -22.9122, lng: -43.2302, radius: 8,
+    prompt: "This vast bowl hosted the 1950 World Cup's shock home defeat — the 'Maracanazo' — and the 2014 final.",
+    fact: "It once held a record crowd of nearly 200,000." },
+
+  { name: "Wembley Stadium", answer: "London, England", country: "England",
+    category: "Match Venue", difficulty: 1, lat: 51.5560, lng: -0.2796, radius: 8,
+    prompt: "Beneath its famous arch, the host nation won its only World Cup in 1966.",
+    fact: "The modern Wembley reopened on the same site in 2007 with a 134m arch." },
+
+  { name: "Estadio Azteca", answer: "Mexico City, Mexico", country: "Mexico",
+    category: "Match Venue", difficulty: 1, lat: 19.3029, lng: -99.1505, radius: 8,
+    prompt: "The only ground to host two World Cup finals, in 1970 and 1986.",
+    fact: "It will become the first stadium to feature at three World Cups in 2026." },
+
+  { name: "Stade de France", answer: "Saint-Denis, France", country: "France",
+    category: "Match Venue", difficulty: 1, lat: 48.9244, lng: 2.3601, radius: 8,
+    prompt: "Site of the 1998 World Cup final, won 3-0 by the host nation.",
+    fact: "Built for that tournament; still France's national stadium." },
+
+  { name: "USA's Best Modern Run (2002)", answer: "United States", country: "USA",
+    category: "Miracle Run", difficulty: 1, lat: 39.8283, lng: -98.5795, winCountry: "United States of America",
+    prompt: "This nation reached the 2002 World Cup quarterfinals — its best modern finish — beating its arch-rivals 'dos a cero' along the way.",
+    fact: "They lost a narrow quarterfinal to Germany. Pin anywhere in the country." },
+
+  // ════════ DIFFICULTY 2 — medium (round 3, fallback) ════════
+
+  { name: "Soccer City (FNB Stadium)", answer: "Johannesburg, South Africa", country: "South Africa",
+    category: "Match Venue", difficulty: 2, lat: -26.2347, lng: 27.9822, radius: 8,
+    prompt: "The calabash-shaped host of the first World Cup final on African soil, in 2010.",
+    fact: "Iniesta's extra-time goal won Spain the trophy here." },
+
+  { name: "Olympiastadion Berlin", answer: "Berlin, Germany", country: "Germany",
+    category: "Match Venue", difficulty: 2, lat: 52.5147, lng: 13.2395, radius: 8,
+    prompt: "Host city of the World Cup final where Italy beat France on penalties — the night of Zidane's headbutt.",
+    fact: "Originally built for the 1936 Olympics." },
+
+  { name: "Estadio Monumental", answer: "Buenos Aires, Argentina", country: "Argentina",
+    category: "Match Venue", difficulty: 2, lat: -34.5453, lng: -58.4498, radius: 8,
+    prompt: "Amid storms of ticker-tape, the host nation won a controversial 1978 World Cup here.",
+    fact: "River Plate's ground, the largest stadium in Argentina." },
+
+  { name: "Rose Bowl", answer: "Pasadena, USA", country: "USA",
+    category: "Match Venue", difficulty: 2, lat: 34.1613, lng: -118.1676, radius: 8,
+    prompt: "Host city of the 1994 final, where Brazil beat Italy on penalties after Roberto Baggio skied his kick.",
+    fact: "Roberto Baggio skied the decisive kick over the bar." },
+
+  { name: "Luzhniki Stadium", answer: "Moscow, Russia", country: "Russia",
+    category: "Match Venue", difficulty: 2, lat: 55.7158, lng: 37.5536, radius: 8,
+    prompt: "France beat Croatia 4-2 in the 2018 final at this stadium — pick the host city.",
+    fact: "Also hosted the 1980 Olympics." },
+
+  { name: "Lionel Messi", answer: "Rosario, Argentina", country: "Argentina",
+    category: "Player Birthplace", difficulty: 2, lat: -32.9442, lng: -60.6505,
+    prompt: "Birthplace of the 2022 World Cup winner, an eight-time Ballon d'Or recipient.",
+    fact: "He left for Barcelona's academy at 13." },
+
+  { name: "Zinedine Zidane", answer: "Marseille, France", country: "France",
+    category: "Player Birthplace", difficulty: 2, lat: 43.2965, lng: 5.3698,
+    prompt: "Birthplace of the playmaker who won the 1998 World Cup, then was sent off for a headbutt in the 2006 final.",
+    fact: "Raised in the La Castellane district of this Mediterranean port." },
+
+  { name: "Johan Cruyff", answer: "Amsterdam, Netherlands", country: "Netherlands",
+    category: "Player Birthplace", difficulty: 2, lat: 52.3676, lng: 4.9041,
+    prompt: "Birthplace of the 'Total Football' icon who dazzled at the 1974 World Cup and gave his name to a famous turn.",
+    fact: "Born a short walk from the old Ajax stadium." },
+
+  { name: "Munich 1974 Final", answer: "Munich, Germany", country: "Germany",
+    category: "World Cup Moment", difficulty: 2, lat: 48.1731, lng: 11.5466, radius: 8,
+    prompt: "Host city of the 1974 final, where West Germany overcame the Netherlands and their Total Football.",
+    fact: "Played at the Olympiastadion; Cruyff's Netherlands lost 2-1." },
+
+  // ════════ DIFFICULTY 3 — hard (rounds 4-5) ════════
+  // World Cup moments and obscure birthplaces.
+
+  { name: "Van Persie's Flying Header (2014)", answer: "Salvador, Brazil", country: "Brazil",
+    category: "World Cup Moment", difficulty: 3, lat: -12.9786, lng: -38.5043, radius: 8,
+    prompt: "This flying header from Robin van Persie capped a stunning 5-1 opening-round rout of the reigning champions at the 2014 World Cup.",
+    fact: "Netherlands stunned reigning champions Spain 5-1 at the Arena Fonte Nova." },
+
+  { name: "The Mineirazo (2014)", answer: "Belo Horizonte, Brazil", country: "Brazil",
+    category: "World Cup Moment", difficulty: 3, lat: -19.8659, lng: -43.9716, radius: 8,
+    prompt: "Host city of the host nation's humiliating 7-1 semifinal collapse against Germany at the 2014 World Cup.",
+    fact: "Germany led 5-0 inside 29 minutes at the Mineirão." },
+
+  { name: "Ronaldo's Redemption (2002)", answer: "Yokohama, Japan", country: "Japan",
+    category: "World Cup Moment", difficulty: 3, lat: 35.5099, lng: 139.6063, radius: 8,
+    prompt: "Host city of the 2002 final, where Ronaldo scored twice to win the trophy and banish the ghosts of 1998.",
+    fact: "Brazil beat Germany 2-0 at the International Stadium." },
+
+  { name: "Mbappé Announces Himself (2018)", answer: "Kazan, Russia", country: "Russia",
+    category: "World Cup Moment", difficulty: 3, lat: 55.8211, lng: 49.1617, radius: 10,
+    prompt: "A teenage Kylian Mbappé tore Argentina apart in a breathless 4-3 win at the 2018 World Cup — pick the host city.",
+    fact: "His blistering pace won a penalty and he scored twice." },
+
+  { name: "Owen's Wonder Goal (1998)", answer: "Saint-Étienne, France", country: "France",
+    category: "World Cup Moment", difficulty: 3, lat: 45.4608, lng: 4.3900, radius: 8,
+    prompt: "A teenage Michael Owen burst clear to score a wonder goal against Argentina at the 1998 World Cup, though England lost on penalties — pick the host city.",
+    fact: "The match also saw David Beckham sent off." },
+
+  { name: "Gazza's Tears (1990)", answer: "Turin, Italy", country: "Italy",
+    category: "World Cup Moment", difficulty: 3, lat: 45.0703, lng: 7.6869, radius: 8,
+    prompt: "Paul Gascoigne wept after a booking in England's 1990 semifinal shootout defeat to West Germany — pick the host city.",
+    fact: "Played at the Stadio delle Alpi; West Germany went on to win the title." },
+
+  { name: "A 17-Year-Old Pelé (1958)", answer: "Stockholm, Sweden", country: "Sweden",
+    category: "World Cup Moment", difficulty: 3, lat: 59.3705, lng: 17.9986, radius: 10,
+    prompt: "A 17-year-old Pelé scored twice in the 1958 final, won by Brazil — pick the host city.",
+    fact: "Brazil beat the hosts 5-2 at the Råsunda Stadium in Solna." },
+
+  { name: "The Miracle of Bern (1954)", answer: "Bern, Switzerland", country: "Switzerland",
+    category: "World Cup Moment", difficulty: 3, lat: 46.9630, lng: 7.4650, radius: 8,
+    prompt: "West Germany shocked the mighty 'Magical Magyars' of Hungary to win the 1954 final — pick the host city.",
+    fact: "The 'Miracle of Bern' was played at the Wankdorf Stadium." },
+
+  { name: "Cristiano Ronaldo", answer: "Funchal, Madeira, Portugal", country: "Portugal",
+    category: "Player Birthplace", difficulty: 3, lat: 32.6669, lng: -16.9241, radius: 12,
+    prompt: "He curled in a stoppage-time free kick to complete his hat-trick and snatch a 3-3 draw with Spain at the 2018 World Cup. Where was this icon born?",
+    fact: "Madeira lies closer to Africa than to mainland Europe." },
+
+  { name: "Pelé", answer: "Três Corações, Brazil", country: "Brazil",
+    category: "Player Birthplace", difficulty: 3, lat: -21.6939, lng: -45.2528, radius: 25,
+    prompt: "Birthplace of the only player to win three World Cups.",
+    fact: "Edson Arantes do Nascimento was born in Minas Gerais." },
+
+  { name: "Luka Modrić", answer: "Zadar, Croatia", country: "Croatia",
+    category: "Player Birthplace", difficulty: 3, lat: 44.1194, lng: 15.2314, radius: 20,
+    prompt: "Birthplace of the midfielder who won the 2018 World Cup Golden Ball and that year's Ballon d'Or.",
+    fact: "He grew up as a war refugee near this coastal city." },
+
+  { name: "Mohamed Salah", answer: "Nagrig, Egypt", country: "Egypt",
+    category: "Player Birthplace", difficulty: 3, lat: 30.8460, lng: 30.9840, radius: 40,
+    prompt: "He scored twice at the 2018 World Cup as his nation reached the tournament for the first time in 28 years. Where was this prolific forward born?",
+    fact: "Salah funded much of his home village's development." },
+
+  { name: "Didier Drogba", answer: "Abidjan, Ivory Coast", country: "Ivory Coast",
+    category: "Player Birthplace", difficulty: 3, lat: 5.3599, lng: -4.0083, radius: 15,
+    prompt: "He captained his nation at its first three World Cups, and is said to have helped pause a civil war after a qualifying match. Where was this striker born?",
+    fact: "His 2005 plea is often credited with calming the conflict." },
+
+  { name: "Carlo Ancelotti", answer: "Reggiolo, Italy", country: "Italy",
+    category: "Manager Birthplace", difficulty: 3, lat: 44.9167, lng: 10.8000, radius: 30,
+    prompt: "Birthplace of the decorated coach appointed to lead Brazil at the 2026 World Cup.",
+    fact: "Born to a dairy-farming family in Emilia-Romagna." },
+
+  // ════════ EVERY WORLD CUP FINAL (host city of each final) ════════
+  // Category "World Cup Final". Coords = the final's stadium. radius = city zone.
+
+  { name: "1930 World Cup Final", answer: "Montevideo, Uruguay", country: "Uruguay",
+    category: "World Cup Final", difficulty: 3, lat: -34.8941, lng: -56.1564, radius: 12,
+    prompt: "Host city of the very first World Cup final in 1930, won 4-2 by the host nation over its neighbours.",
+    fact: "Played at the Estadio Centenario, built for the tournament." },
+  { name: "1934 World Cup Final", answer: "Rome, Italy", country: "Italy",
+    category: "World Cup Final", difficulty: 2, lat: 41.9276, lng: 12.4699, radius: 12,
+    prompt: "Host city of the 1934 final, won by the host nation under a watching dictator.",
+    fact: "Italy beat Czechoslovakia 2-1 after extra time at the Stadio Nazionale PNF." },
+  { name: "1938 World Cup Final", answer: "Paris, France", country: "France",
+    category: "World Cup Final", difficulty: 2, lat: 48.9239, lng: 2.2519, radius: 14,
+    prompt: "Host city of the 1938 final, the last World Cup before World War II.",
+    fact: "Italy retained the title, beating Hungary 4-2 at the Stade Olympique de Colombes." },
+  { name: "1950 World Cup Final", answer: "Rio de Janeiro, Brazil", country: "Brazil",
+    category: "World Cup Final", difficulty: 1, lat: -22.9122, lng: -43.2302, radius: 12,
+    prompt: "Host city of the decisive 1950 final-pool match — the 'Maracanazo'.",
+    fact: "Uruguay shocked the hosts 2-1 in front of nearly 200,000." },
+  { name: "1954 World Cup Final", answer: "Bern, Switzerland", country: "Switzerland",
+    category: "World Cup Final", difficulty: 3, lat: 46.9630, lng: 7.4650, radius: 12,
+    prompt: "Host city of the 1954 final, the 'Miracle' upset of the mighty Hungarians.",
+    fact: "West Germany came from 2-0 down to win 3-2 at the Wankdorf." },
+  { name: "1958 World Cup Final", answer: "Solna (Stockholm), Sweden", country: "Sweden",
+    category: "World Cup Final", difficulty: 3, lat: 59.3705, lng: 17.9986, radius: 14,
+    prompt: "Host city of the 1958 final, where a 17-year-old Pelé scored twice.",
+    fact: "Brazil beat the hosts 5-2 at the Råsunda Stadium." },
+  { name: "1962 World Cup Final", answer: "Santiago, Chile", country: "Chile",
+    category: "World Cup Final", difficulty: 3, lat: -33.4644, lng: -70.6109, radius: 12,
+    prompt: "Host city of the 1962 final, won by Brazil even without the injured Pelé.",
+    fact: "Brazil beat Czechoslovakia 3-1 at the Estadio Nacional." },
+  { name: "1966 World Cup Final", answer: "London, England", country: "England",
+    category: "World Cup Final", difficulty: 1, lat: 51.5560, lng: -0.2796, radius: 12,
+    prompt: "Host city of the 1966 final and its much-debated hat-trick.",
+    fact: "England beat West Germany 4-2 after extra time at Wembley." },
+  { name: "1970 World Cup Final", answer: "Mexico City, Mexico", country: "Mexico",
+    category: "World Cup Final", difficulty: 1, lat: 19.3029, lng: -99.1505, radius: 14,
+    prompt: "Host city of the 1970 final, sealed by Carlos Alberto's famous team goal.",
+    fact: "Brazil beat Italy 4-1 at the Estadio Azteca." },
+  { name: "1974 World Cup Final", answer: "Munich, Germany", country: "Germany",
+    category: "World Cup Final", difficulty: 2, lat: 48.1731, lng: 11.5466, radius: 12,
+    prompt: "Host city of the 1974 final, where the hosts beat Total Football.",
+    fact: "West Germany beat the Netherlands 2-1 at the Olympiastadion." },
+  { name: "1978 World Cup Final", answer: "Buenos Aires, Argentina", country: "Argentina",
+    category: "World Cup Final", difficulty: 2, lat: -34.5453, lng: -58.4498, radius: 14,
+    prompt: "Host city of the 1978 final, won by the hosts amid storms of ticker-tape.",
+    fact: "Argentina beat the Netherlands 3-1 after extra time at the Monumental." },
+  { name: "1982 World Cup Final", answer: "Madrid, Spain", country: "Spain",
+    category: "World Cup Final", difficulty: 2, lat: 40.4531, lng: -3.6883, radius: 12,
+    prompt: "Host city of the 1982 final, lit up by Marco Tardelli's screaming celebration.",
+    fact: "Italy beat West Germany 3-1 at the Santiago Bernabéu." },
+  { name: "1986 World Cup Final", answer: "Mexico City, Mexico", country: "Mexico",
+    category: "World Cup Final", difficulty: 1, lat: 19.3029, lng: -99.1505, radius: 14,
+    prompt: "Host city of the 1986 final, the climax of Maradona's tournament.",
+    fact: "Argentina beat West Germany 3-2 at the Estadio Azteca." },
+  { name: "1990 World Cup Final", answer: "Rome, Italy", country: "Italy",
+    category: "World Cup Final", difficulty: 2, lat: 41.9339, lng: 12.4547, radius: 12,
+    prompt: "Host city of the 1990 final, settled by a late Andreas Brehme penalty.",
+    fact: "West Germany beat Argentina 1-0 at the Stadio Olimpico." },
+  { name: "1994 World Cup Final", answer: "Pasadena, USA", country: "USA",
+    category: "World Cup Final", difficulty: 2, lat: 34.1613, lng: -118.1676, radius: 14,
+    prompt: "Host city of the 1994 final, the first ever decided by a penalty shootout.",
+    fact: "Brazil beat Italy after Baggio's miss at the Rose Bowl." },
+  { name: "1998 World Cup Final", answer: "Saint-Denis, France", country: "France",
+    category: "World Cup Final", difficulty: 1, lat: 48.9244, lng: 2.3601, radius: 14,
+    prompt: "Host city of the 1998 final, won 3-0 by the hosts with two Zidane headers.",
+    fact: "France beat Brazil at the Stade de France." },
+  { name: "2002 World Cup Final", answer: "Yokohama, Japan", country: "Japan",
+    category: "World Cup Final", difficulty: 3, lat: 35.5099, lng: 139.6063, radius: 14,
+    prompt: "Host city of the 2002 final, Ronaldo's redemption with two goals.",
+    fact: "Brazil beat Germany 2-0 at the International Stadium." },
+  { name: "2006 World Cup Final", answer: "Berlin, Germany", country: "Germany",
+    category: "World Cup Final", difficulty: 2, lat: 52.5147, lng: 13.2395, radius: 12,
+    prompt: "Host city of the 2006 final, remembered for Zidane's headbutt and red card.",
+    fact: "Italy beat France on penalties at the Olympiastadion." },
+  { name: "2010 World Cup Final", answer: "Johannesburg, South Africa", country: "South Africa",
+    category: "World Cup Final", difficulty: 2, lat: -26.2347, lng: 27.9822, radius: 14,
+    prompt: "Host city of the 2010 final, the first ever played on African soil.",
+    fact: "Spain beat the Netherlands 1-0 on an Iniesta extra-time goal at Soccer City." },
+  { name: "2014 World Cup Final", answer: "Rio de Janeiro, Brazil", country: "Brazil",
+    category: "World Cup Final", difficulty: 1, lat: -22.9122, lng: -43.2302, radius: 12,
+    prompt: "Host city of the 2014 final, won by Germany in extra time via Mario Götze.",
+    fact: "Germany beat Argentina 1-0 at the Maracanã." },
+  { name: "2018 World Cup Final", answer: "Moscow, Russia", country: "Russia",
+    category: "World Cup Final", difficulty: 2, lat: 55.7158, lng: 37.5536, radius: 14,
+    prompt: "Host city of the 2018 final, a six-goal thriller in the rain.",
+    fact: "France beat Croatia 4-2 at the Luzhniki Stadium." },
+  { name: "2022 World Cup Final", answer: "Lusail, Qatar", country: "Qatar",
+    category: "World Cup Final", difficulty: 2, lat: 25.4231, lng: 51.4906, radius: 14,
+    prompt: "Host city of the 2022 final, Messi's crowning glory after a penalty shootout.",
+    fact: "Argentina beat France 4-2 on penalties at the Lusail Stadium." },
+
+  // ════════ GOLDEN BOOT WINNERS — hometowns (NO country in prompt) ════════
+  // Category "Golden Boot". Prompts never name the country; hints reveal it.
+
+  { name: "Guillermo Stábile", answer: "Buenos Aires, Argentina", country: "Argentina",
+    category: "Golden Boot", difficulty: 2, lat: -34.6037, lng: -58.3816,
+    prompt: "Hometown of the first World Cup top scorer, who hit 8 goals at the 1930 tournament.",
+    fact: "Stábile's 'El Filtrador' nickname came from his sharp movement." },
+  { name: "Oldřich Nejedlý", answer: "Žebrák, Czechoslovakia", country: "Czech Republic",
+    category: "Golden Boot", difficulty: 3, lat: 49.8767, lng: 13.9050, radius: 35,
+    prompt: "Hometown of the 1934 World Cup top scorer (5 goals), a star of a beaten finalist.",
+    fact: "He played his whole club career for Sparta Prague." },
+  { name: "Leônidas", answer: "Rio de Janeiro, Brazil", country: "Brazil",
+    category: "Golden Boot", difficulty: 2, lat: -22.9068, lng: -43.1729,
+    prompt: "Hometown of the 1938 top scorer, nicknamed the 'Black Diamond' and credited with popularising the bicycle kick.",
+    fact: "He scored 7 goals at the 1938 World Cup." },
+  { name: "Ademir", answer: "Recife, Brazil", country: "Brazil",
+    category: "Golden Boot", difficulty: 3, lat: -8.0476, lng: -34.8770,
+    prompt: "Hometown of the 1950 World Cup top scorer, who hit 8 goals on home soil.",
+    fact: "Ademir de Menezes terrorised defences with his pace." },
+  { name: "Sándor Kocsis", answer: "Budapest, Hungary", country: "Hungary",
+    category: "Golden Boot", difficulty: 2, lat: 47.4979, lng: 19.0402,
+    prompt: "Hometown of the 1954 top scorer (11 goals), 'Golden Head' of the Magical Magyars.",
+    fact: "His Hungary side lost the final despite his goals." },
+  { name: "Just Fontaine", answer: "Marrakesh, Morocco", country: "Morocco",
+    category: "Golden Boot", difficulty: 3, lat: 31.6295, lng: -7.9811,
+    prompt: "Hometown of the man who scored a record 13 goals at a single World Cup, in 1958.",
+    fact: "No one has beaten his single-tournament record since." },
+  { name: "Garrincha", answer: "Magé, Brazil", country: "Brazil",
+    category: "Golden Boot", difficulty: 2, lat: -22.6486, lng: -43.0408, radius: 35,
+    prompt: "Hometown of the 'Little Bird', joint top scorer as Brazil won the 1962 World Cup without the injured Pelé.",
+    fact: "Born with curved legs, he became one of the great dribblers." },
+  { name: "Eusébio", answer: "Maputo, Mozambique", country: "Mozambique",
+    category: "Golden Boot", difficulty: 3, lat: -25.9692, lng: 32.5732,
+    prompt: "He won the Golden Boot at the 1966 World Cup starring for Portugal, but the 'Black Panther' was actually born in one of its African colonies. Where was he born?",
+    fact: "He starred for Portugal and Benfica, but was born in colonial Lourenço Marques." },
+  { name: "Gerd Müller", answer: "Nördlingen, Germany", country: "Germany",
+    category: "Golden Boot", difficulty: 3, lat: 48.8514, lng: 10.4877, radius: 30,
+    prompt: "Hometown of 'Der Bomber', the 1970 top scorer (10 goals) and later a 1974 final winner.",
+    fact: "His goal-per-game records stood for decades." },
+  { name: "Grzegorz Lato", answer: "Malbork, Poland", country: "Poland",
+    category: "Golden Boot", difficulty: 3, lat: 54.0359, lng: 19.0259, radius: 30,
+    prompt: "Hometown of the 1974 Golden Boot winner (7 goals) who fired his nation to third place.",
+    fact: "He was famed for his lightning runs down the right." },
+  { name: "Mario Kempes", answer: "Bell Ville, Argentina", country: "Argentina",
+    category: "Golden Boot", difficulty: 3, lat: -32.6256, lng: -62.6889, radius: 35,
+    prompt: "Hometown of the long-haired striker whose 6 goals won the hosts the 1978 World Cup.",
+    fact: "He was the only foreign-based player in Argentina's 1978 squad." },
+  { name: "Paolo Rossi", answer: "Prato, Italy", country: "Italy",
+    category: "Golden Boot", difficulty: 3, lat: 43.8777, lng: 11.1022,
+    prompt: "Hometown of the 1982 Golden Boot winner, who returned from a betting ban to win it all.",
+    fact: "His hat-trick against Brazil is the stuff of legend." },
+  { name: "Gary Lineker", answer: "Leicester, England", country: "England",
+    category: "Golden Boot", difficulty: 2, lat: 52.6369, lng: -1.1398,
+    prompt: "Hometown of the 1986 Golden Boot winner (6 goals), later a famed broadcaster.",
+    fact: "He was never shown a card in his entire career." },
+  { name: "Salvatore Schillaci", answer: "Palermo, Italy", country: "Italy",
+    category: "Golden Boot", difficulty: 3, lat: 38.1157, lng: 13.3615,
+    prompt: "Hometown of the wide-eyed striker whose 6 goals gripped the hosts at the 1990 World Cup.",
+    fact: "'Totò' came almost from nowhere to top the scoring charts." },
+  { name: "Hristo Stoichkov", answer: "Plovdiv, Bulgaria", country: "Bulgaria",
+    category: "Golden Boot", difficulty: 3, lat: 42.1354, lng: 24.7453,
+    prompt: "Hometown of a fiery 1994 co-Golden-Boot winner who fired his nation to a shock semifinal.",
+    fact: "He also won the Ballon d'Or that year." },
+  { name: "Davor Šuker", answer: "Osijek, Croatia", country: "Croatia",
+    category: "Golden Boot", difficulty: 3, lat: 45.5550, lng: 18.6955,
+    prompt: "Hometown of the 1998 Golden Boot winner who led his debutant nation to third place.",
+    fact: "His delicate finishing defined that Croatia side." },
+  { name: "Ronaldo", answer: "Rio de Janeiro, Brazil", country: "Brazil",
+    category: "Golden Boot", difficulty: 2, lat: -22.8531, lng: -43.3490,
+    prompt: "Hometown of the 2002 Golden Boot winner, eight goals of redemption after 1998.",
+    fact: "'O Fenômeno' was born in the Bento Ribeiro suburb." },
+  { name: "Miroslav Klose", answer: "Opole, Poland", country: "Poland",
+    category: "Golden Boot", difficulty: 3, lat: 50.6751, lng: 17.9213,
+    prompt: "Hometown of the 2006 Golden Boot winner — born far to the east of the country he scored for.",
+    fact: "Klose is the all-time leading World Cup scorer, but was born in Poland." },
+  { name: "Thomas Müller", answer: "Weilheim, Germany", country: "Germany",
+    category: "Golden Boot", difficulty: 3, lat: 47.8401, lng: 11.1426, radius: 30,
+    prompt: "Hometown of the 2010 Golden Boot winner, then a 20-year-old breakout sensation.",
+    fact: "He won it on assists as a tiebreaker over four other players." },
+  { name: "James Rodríguez", answer: "Cúcuta, Colombia", country: "Colombia",
+    category: "Golden Boot", difficulty: 3, lat: 7.8939, lng: -72.5078,
+    prompt: "Hometown of the 2014 Golden Boot winner, famed for a thunderous chest-and-volley.",
+    fact: "His goal against Uruguay won the tournament's best-goal award." },
+  { name: "Harry Kane", answer: "London, England", country: "England",
+    category: "Golden Boot", difficulty: 2, lat: 51.5908, lng: -0.0134,
+    prompt: "Hometown of the 2018 Golden Boot winner, his nation's record-chasing captain.",
+    fact: "Born in Walthamstow; many of his goals came from penalties." },
+
+  // ════════ MIRACLE RUNS — pin ANYWHERE in the country to win ════════
+  // winCountry = exact GeoJSON name. lat/lng = a representative city.
+
+  { name: "South Korea's Miracle (2002)", answer: "South Korea", country: "South Korea",
+    category: "Miracle Run", difficulty: 3, lat: 37.5665, lng: 126.9780, winCountry: "South Korea",
+    prompt: "This nation made a stunning run to the 2002 World Cup semifinals, beating Italy and Spain — then lost the third-place game after conceding in the opening seconds to Türkiye.",
+    fact: "Hakan Şükür's goal, ~11 seconds in, is still the fastest in World Cup history. Pin anywhere in the country." },
+  { name: "Croatia's Debut Run (1998)", answer: "Croatia", country: "Croatia",
+    category: "Miracle Run", difficulty: 2, lat: 45.8150, lng: 15.9819, winCountry: "Croatia",
+    prompt: "In their first-ever World Cup as an independent nation, this country stormed to third place, their striker winning the Golden Boot.",
+    fact: "Davor Šuker top-scored; they beat Germany 3-0 in the quarters. Pin anywhere in the country." },
+  { name: "Morocco's Historic 2022", answer: "Morocco", country: "Morocco",
+    category: "Miracle Run", difficulty: 2, lat: 34.0209, lng: -6.8417, winCountry: "Morocco",
+    prompt: "This nation became the first from Africa and the Arab world to reach a World Cup semifinal, in 2022.",
+    fact: "They beat Spain and Portugal on the way. Pin anywhere in the country." },
+  { name: "Bulgaria's Surprise (1994)", answer: "Bulgaria", country: "Bulgaria",
+    category: "Miracle Run", difficulty: 3, lat: 42.6977, lng: 23.3219, winCountry: "Bulgaria",
+    prompt: "Inspired by a fiery Golden Boot winner, this nation shocked holders Germany to reach the 1994 semifinals.",
+    fact: "Hristo Stoichkov led them to a stunning fourth place. Pin anywhere in the country." },
+  { name: "Türkiye's Bronze (2002)", answer: "Türkiye", country: "Turkey",
+    category: "Miracle Run", difficulty: 3, lat: 39.9334, lng: 32.8597, winCountry: "Turkey",
+    prompt: "This nation finished a best-ever third at the 2002 World Cup, scoring the fastest goal in the tournament's history in the bronze match.",
+    fact: "Hakan Şükür scored after ~11 seconds vs South Korea. Pin anywhere in the country." },
+  { name: "Cameroon's Roar (1990)", answer: "Cameroon", country: "Cameroon",
+    category: "Miracle Run", difficulty: 3, lat: 3.8480, lng: 11.5021, winCountry: "Cameroon",
+    prompt: "Led by the veteran Roger Milla's corner-flag dances, this nation became the first from its continent to reach a World Cup quarterfinal, in 1990.",
+    fact: "They beat holders Argentina in the opening match. Pin anywhere in the country." },
+  { name: "Senegal Stuns France (2002)", answer: "Senegal", country: "Senegal",
+    category: "Miracle Run", difficulty: 3, lat: 14.7167, lng: -17.4677, winCountry: "Senegal",
+    prompt: "On their World Cup debut in 2002, this nation beat the reigning champions in the opening game and reached the quarterfinals.",
+    fact: "Papa Bouba Diop's goal sank France. Pin anywhere in the country." },
+  { name: "Costa Rica's Group of Death (2014)", answer: "Costa Rica", country: "Costa Rica",
+    category: "Miracle Run", difficulty: 3, lat: 9.9281, lng: -84.0907, winCountry: "Costa Rica",
+    prompt: "This nation topped a group containing three former champions — Italy, England and Uruguay — and reached the 2014 quarterfinals.",
+    fact: "They went out on penalties to the Netherlands. Pin anywhere in the country." },
+  { name: "North Korea Shocks Italy (1966)", answer: "North Korea", country: "North Korea",
+    category: "Miracle Run", difficulty: 3, lat: 39.0392, lng: 125.7625, winCountry: "North Korea",
+    prompt: "This mysterious nation stunned Italy 1-0 and reached the 1966 quarterfinals, where they led Portugal 3-0 before collapsing.",
+    fact: "Pak Doo-ik's goal is one of the great World Cup upsets. Pin anywhere in the country." },
+
+  // ════════ EXTRA PLAYERS & MANAGERS (World Cup figures) ════════
+
+  { name: "Ronaldinho", answer: "Porto Alegre, Brazil", country: "Brazil",
+    category: "Player Birthplace", difficulty: 3, lat: -30.0346, lng: -51.2177,
+    prompt: "He won the 2002 World Cup and beat England that year with an audacious long-range free kick. Where was this grinning magician born?",
+    fact: "He grew up in a southern Brazilian river city." },
+  { name: "Andrés Iniesta", answer: "Fuentealbilla, Spain", country: "Spain",
+    category: "Player Birthplace", difficulty: 3, lat: 39.2400, lng: -1.5100, radius: 35,
+    prompt: "Birthplace of the midfielder who scored the winning goal in the 2010 World Cup final.",
+    fact: "Born in a tiny village; his family runs a winery there." },
+  { name: "Thierry Henry", answer: "Les Ulis (Paris), France", country: "France",
+    category: "Player Birthplace", difficulty: 3, lat: 48.6817, lng: 2.1694, radius: 20,
+    prompt: "Birthplace of Arsenal's record scorer and a 1998 World Cup winner.",
+    fact: "He came through the Clairefontaine academy." },
+  { name: "Luis Suárez", answer: "Salto, Uruguay", country: "Uruguay",
+    category: "Player Birthplace", difficulty: 3, lat: -31.3833, lng: -57.9667, radius: 20,
+    prompt: "He handled the ball on the line to deny Ghana in 2010, then bit an opponent at the 2014 World Cup. Where was this striker born?",
+    fact: "Born in a northern Uruguayan city near the Argentine border." },
+  { name: "Samuel Eto'o", answer: "Douala, Cameroon", country: "Cameroon",
+    category: "Player Birthplace", difficulty: 3, lat: 4.0511, lng: 9.7679,
+    prompt: "He led the line for Cameroon at four World Cups between 1998 and 2014. Where was this striker born?",
+    fact: "Born in his nation's largest port city." },
+
+  { name: "Didier Deschamps", answer: "Bayonne, France", country: "France",
+    category: "Manager Birthplace", difficulty: 3, lat: 43.4929, lng: -1.4748, radius: 20,
+    prompt: "Birthplace of one of only three men to win the World Cup as both captain (1998) and manager (2018).",
+    fact: "He lifted it as a player in 1998 and as a coach in 2018." },
+  { name: "Luis Enrique", answer: "Gijón, Spain", country: "Spain",
+    category: "Manager Birthplace", difficulty: 2, lat: 43.5322, lng: -5.6611, radius: 15,
+    prompt: "Birthplace of the manager who led Spain at the 2022 World Cup.",
+    fact: "Born in a northern Spanish coastal city; he also raced triathlons." },
+
+  // ════════ USER-REQUESTED MOMENTS & BIRTHPLACES ════════
+
+  { name: "The Hand of God (1986)", answer: "Mexico City, Mexico", country: "Mexico",
+    category: "World Cup Moment", difficulty: 2, lat: 19.3029, lng: -99.1505, radius: 14,
+    prompt: "In a 1986 quarterfinal, Maradona punched in one goal and then dribbled half the pitch for another — both against England. Pick the host city.",
+    fact: "The 'Hand of God' and the 'Goal of the Century' came minutes apart at the Estadio Azteca." },
+
+  { name: "Italy Break German Hearts (2006)", answer: "Dortmund, Germany", country: "Germany",
+    category: "World Cup Moment", difficulty: 3, lat: 51.4926, lng: 7.4518, radius: 10,
+    prompt: "Italy knocked the host nation out of their own 2006 World Cup with two goals in the final two minutes of extra time, in this city's famous 'Yellow Wall' stadium.",
+    fact: "Grosso and Del Piero scored late at Signal Iduna Park to reach the final." },
+
+  { name: "Hosts Knock Out Spain (2018)", answer: "Moscow, Russia", country: "Russia",
+    category: "World Cup Moment", difficulty: 2, lat: 55.7158, lng: 37.5536, radius: 14,
+    prompt: "In 2018 the host nation stunned a former champion and pre-tournament favourite on penalties in the round of 16 — pick the host city.",
+    fact: "Russia beat Spain on penalties at the Luzhniki Stadium." },
+
+  { name: "USA's 2014 Manager", answer: "Göppingen, Germany", country: "Germany",
+    category: "Manager Birthplace", difficulty: 3, lat: 48.7036, lng: 9.6520, radius: 20,
+    prompt: "Birthplace of the manager who guided the United States out of the 2014 'Group of Death' to the round of 16 — a former World Cup-winning striker himself.",
+    fact: "Born in southern Germany; he had earlier won the 1990 World Cup as a player." },
+
+  { name: "Donovan's Last-Gasp Goal (2010)", answer: "Pretoria, South Africa", country: "South Africa",
+    category: "World Cup Moment", difficulty: 3, lat: -25.7530, lng: 28.2228, radius: 12,
+    prompt: "Landon Donovan's stoppage-time goal against Algeria sent the United States through as group winners, sparking wild celebrations across the country, in this host city.",
+    fact: "The dramatic winner came at Loftus Versfeld Stadium. (Ghana would knock the US out in the next round.)" },
+
+  { name: "Czech Republic 3-0 USA (2006)", answer: "Gelsenkirchen, Germany", country: "Germany",
+    category: "World Cup Moment", difficulty: 3, lat: 51.5547, lng: 7.0676, radius: 12,
+    prompt: "The United States opened their 2006 World Cup with a chastening 3-0 loss to the Czech Republic — pick the host city.",
+    fact: "Tomáš Rosický scored twice; the US went home after the group stage." },
+
+  { name: "The Miracle on Grass (1950)", answer: "Belo Horizonte, Brazil", country: "Brazil",
+    category: "World Cup Moment", difficulty: 3, lat: -19.9320, lng: -43.9180, radius: 12,
+    prompt: "In one of the greatest upsets in the sport's history, a part-time United States team beat mighty England 1-0 at the 1950 World Cup. Pick the host city.",
+    fact: "Joe Gaetjens' header stunned the world at the Estádio Independência." },
+
+  // ════════ BORN ELSEWHERE (World Cup players born in a surprising country) ════════
+
+  { name: "Achraf Hakimi", answer: "Madrid, Spain", country: "Spain",
+    category: "Born Elsewhere", difficulty: 3, lat: 40.4168, lng: -3.7038, radius: 30,
+    prompt: "A flying right-back in Morocco's run to the 2022 World Cup semifinals, he was actually born in a European capital. Pick his birthplace.",
+    fact: "Hakimi was born and raised in Madrid to Moroccan parents." },
+
+  { name: "Matheus Nunes", answer: "Rio de Janeiro, Brazil", country: "Brazil",
+    category: "Born Elsewhere", difficulty: 3, lat: -22.9068, lng: -43.1729, radius: 40,
+    prompt: "He was part of Portugal's 2022 World Cup squad, yet he was born in South America. Pick his birthplace.",
+    fact: "Matheus Nunes was born in Brazil and moved to Portugal as a teenager." },
+
+  { name: "Mike Maignan", answer: "Cayenne, French Guiana", country: "French Guiana",
+    category: "Born Elsewhere", difficulty: 3, lat: 4.9227, lng: -52.3269, radius: 50,
+    prompt: "Tipped to be France's goalkeeper at the 2026 World Cup, he was born not in Europe but in South America. Pick his birthplace.",
+    fact: "Maignan was born in the French overseas territory of French Guiana." },
+
+  { name: "Sergiño Dest", answer: "Almere, Netherlands", country: "Netherlands",
+    category: "Born Elsewhere", difficulty: 3, lat: 52.3508, lng: 5.2647, radius: 30,
+    prompt: "This full-back played for the United States at the 2022 World Cup, but he was born and raised in Europe. Pick his birthplace.",
+    fact: "Dest came through the Ajax academy before choosing the USA." },
+
+  { name: "Alphonso Davies", answer: "Buduburam, Ghana", country: "Ghana",
+    category: "Born Elsewhere", difficulty: 3, lat: 5.5333, lng: -0.4500, radius: 60,
+    prompt: "Canada's electric winger at the 2022 World Cup was born in a refugee camp in Africa. Pick his birthplace.",
+    fact: "His Liberian-refugee family later resettled in Canada." },
+
+  { name: "Diego Costa", answer: "Lagarto, Brazil", country: "Brazil",
+    category: "Born Elsewhere", difficulty: 3, lat: -10.9150, lng: -37.6500, radius: 60,
+    prompt: "He played for Spain at the 2014 and 2018 World Cups despite being born in South America. Pick his birthplace.",
+    fact: "Diego Costa was born in north-eastern Brazil and switched allegiance to Spain." },
+
+  // ════════ DEBUT / LONG ABSENCE (2026 World Cup) ════════
+
+  { name: "Curaçao's First World Cup", answer: "Curaçao", country: "Curaçao",
+    category: "Debut / Return", difficulty: 3, lat: 12.1696, lng: -68.9900, winCountry: "Curaçao",
+    prompt: "This tiny Caribbean island nation is making its first-ever World Cup appearance at the 2026 finals. Pin the country.",
+    fact: "Among the smallest nations ever to qualify. Pin anywhere in it." },
+
+  { name: "Haiti Returns", answer: "Haiti", country: "Haiti",
+    category: "Debut / Return", difficulty: 3, lat: 18.5944, lng: -72.3074, winCountry: "Haiti",
+    prompt: "This Caribbean nation reached the 2026 World Cup — its first appearance since 1974. Pin the country.",
+    fact: "A 52-year wait between World Cups. Pin anywhere in it." },
+
+  { name: "Cape Verde's First World Cup", answer: "Cape Verde", country: "Cape Verde",
+    category: "Debut / Return", difficulty: 3, lat: 14.9177, lng: -23.5092, winCountry: "Cabo Verde",
+    prompt: "These small Atlantic islands off the African coast reached their first-ever World Cup in 2026. Pin the country.",
+    fact: "One of the smallest nations by population ever to qualify. Pin anywhere in it." },
+
+  { name: "Uzbekistan's First World Cup", answer: "Uzbekistan", country: "Uzbekistan",
+    category: "Debut / Return", difficulty: 3, lat: 41.3111, lng: 69.2797, winCountry: "Uzbekistan",
+    prompt: "This Central Asian nation reached its first-ever World Cup at the 2026 finals. Pin the country.",
+    fact: "A landmark qualification for the region. Pin anywhere in it." },
+
+  { name: "Jordan's First World Cup", answer: "Jordan", country: "Jordan",
+    category: "Debut / Return", difficulty: 3, lat: 31.9539, lng: 35.9106, winCountry: "Jordan",
+    prompt: "This Middle Eastern nation qualified for its first-ever World Cup in 2026. Pin the country.",
+    fact: "Reached the finals after a breakthrough campaign. Pin anywhere in it." },
+
+  { name: "Scotland Returns", answer: "Scotland", country: "Scotland",
+    category: "Debut / Return", difficulty: 2, lat: 56.8000, lng: -4.2000, radius: 170,
+    prompt: "After an absence stretching back to 1998, this nation returned to the World Cup at the 2026 finals. Pin the country.",
+    fact: "Ended a long wait to reach the World Cup again." },
+
+  // ════════ EXTRA MIRACLE RUN ════════
+
+  { name: "USA's Third Place (1930)", answer: "Uruguay", country: "Uruguay",
+    category: "Miracle Run", difficulty: 2, lat: -34.9011, lng: -56.1645, winCountry: "Uruguay",
+    prompt: "The United States reached the semifinals — a best-ever third place — at the very first World Cup, in 1930. Pin the host nation.",
+    fact: "The inaugural tournament had just 13 teams. Pin anywhere in the host nation." },
+
+  // ════════ MORE WORLD CUP MOMENTS ════════
+
+  { name: "The Disgrace of Gijón (1982)", answer: "Gijón, Spain", country: "Spain",
+    category: "World Cup Moment", difficulty: 3, lat: 43.5357, lng: -5.6615, radius: 10,
+    prompt: "In a notorious 1982 World Cup group game, West Germany and Austria played out a limp 1-0 that sent both through and dumped Algeria out. Pick the host city.",
+    fact: "The 'Disgrace of Gijón' led FIFA to make final group games kick off simultaneously." },
+
+  // ════════ FOOTBALL NATIONS (easy — pin the country) ════════
+
+  { name: "Brazil", answer: "Brazil", country: "Brazil",
+    category: "Football Nation", difficulty: 1, lat: -15.7939, lng: -47.8828, winCountry: "Brazil",
+    prompt: "The most successful nation in World Cup history with five titles, and hosts of the 2014 tournament. Pin the country.",
+    fact: "Five-time champions: 1958, 1962, 1970, 1994, 2002. Pin anywhere in it." },
+
+  { name: "Argentina", answer: "Argentina", country: "Argentina",
+    category: "Football Nation", difficulty: 1, lat: -34.6037, lng: -58.3816, winCountry: "Argentina",
+    prompt: "The reigning World Cup champions, who won it all in 2022 behind Lionel Messi. Pin the country.",
+    fact: "Three-time champions: 1978, 1986, 2022. Pin anywhere in it." },
+
+  { name: "Germany", answer: "Germany", country: "Germany",
+    category: "Football Nation", difficulty: 1, lat: 52.5200, lng: 13.4050, winCountry: "Germany",
+    prompt: "A four-time World Cup winner that hosted the 2006 tournament. Pin the country.",
+    fact: "Champions in 1954, 1974, 1990 and 2014. Pin anywhere in it." },
+
+  { name: "France", answer: "France", country: "France",
+    category: "Football Nation", difficulty: 1, lat: 48.8566, lng: 2.3522, winCountry: "France",
+    prompt: "Winners of the 2018 World Cup and runners-up in 2022. Pin the country.",
+    fact: "Champions in 1998 and 2018. Pin anywhere in it." },
+
+  { name: "Spain", answer: "Spain", country: "Spain",
+    category: "Football Nation", difficulty: 1, lat: 40.4168, lng: -3.7038, winCountry: "Spain",
+    prompt: "This nation won its first World Cup in 2010, sealed by an Andrés Iniesta goal. Pin the country.",
+    fact: "2010 world champions. Pin anywhere in it." },
+
+  { name: "Italy", answer: "Italy", country: "Italy",
+    category: "Football Nation", difficulty: 1, lat: 41.9028, lng: 12.4964, winCountry: "Italy",
+    prompt: "A four-time World Cup winner, most recently triumphant in 2006. Pin the country.",
+    fact: "Champions in 1934, 1938, 1982 and 2006. Pin anywhere in it." },
+
+  // ════════ MORE WORLD CUP MOMENTS (batch 2) ════════
+
+  { name: "Banks' Save of the Century (1970)", answer: "Guadalajara, Mexico", country: "Mexico",
+    category: "World Cup Moment", difficulty: 3, lat: 20.6819, lng: -103.3475, radius: 10,
+    prompt: "Gordon Banks somehow clawed away a downward header from Pelé in 'the save of the century' at the 1970 World Cup. Pick the host city.",
+    fact: "It happened at the Estadio Jalisco during Brazil v England." },
+
+  { name: "Cameroon Stun Argentina (1990)", answer: "Milan, Italy", country: "Italy",
+    category: "World Cup Moment", difficulty: 3, lat: 45.4781, lng: 9.1240, radius: 10,
+    prompt: "Unfancied Cameroon, down to nine men, beat the reigning champions Argentina in the opening game of the 1990 World Cup. Pick the host city.",
+    fact: "François Omam-Biyik's header won it at the San Siro." },
+
+  { name: "Tim Howard's Heroics (2014)", answer: "Salvador, Brazil", country: "Brazil",
+    category: "World Cup Moment", difficulty: 3, lat: -12.9786, lng: -38.5043, radius: 10,
+    prompt: "Goalkeeper Tim Howard made a record number of saves for the United States in a heroic 2014 World Cup defeat to Belgium. Pick the host city.",
+    fact: "Howard's 15 saves came in a 2-1 extra-time loss at the Arena Fonte Nova." },
+
+  { name: "Ghana's Heartbreak (2010)", answer: "Johannesburg, South Africa", country: "South Africa",
+    category: "World Cup Moment", difficulty: 3, lat: -26.2347, lng: 27.9822, radius: 10,
+    prompt: "Asamoah Gyan blazed a last-gasp penalty off the bar after a Luis Suárez handball, denying Ghana a place in the 2010 semifinals. Pick the host city.",
+    fact: "Uruguay won the shootout at Soccer City; Ghana would have been the first African semifinalist." },
+
+  { name: "Bergkamp's Sublime Goal (1998)", answer: "Marseille, France", country: "France",
+    category: "World Cup Moment", difficulty: 3, lat: 43.2698, lng: 5.3958, radius: 10,
+    prompt: "Dennis Bergkamp killed a long pass and curled in an exquisite last-minute winner to beat Argentina in a 1998 World Cup quarterfinal. Pick the host city.",
+    fact: "It came at the Stade Vélodrome; many call it the finest World Cup goal." },
+
+  { name: "Gemmill's Solo Goal (1978)", answer: "Mendoza, Argentina", country: "Argentina",
+    category: "World Cup Moment", difficulty: 3, lat: -32.8833, lng: -68.8500, radius: 10,
+    prompt: "Archie Gemmill slalomed through the Dutch defence for one of the World Cup's greatest solo goals, for Scotland in 1978. Pick the host city.",
+    fact: "Scotland won 3-2 but still went out on goal difference." },
+
+];

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>WhereInTheWorldCup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Game screen -->
+  <div id="game-screen">
+
+    <!-- Panel -->
+    <div id="panel">
+
+      <div id="round-badge">
+        <span class="badge-cat">⚽ Match Venue</span>
+        <span class="badge-round">Round 1 / 5</span>
+      </div>
+
+      <div id="panel-upper">
+
+        <div id="photo-container" onclick="openPhoto()" title="Tap to enlarge" style="display:none">
+          <img id="site-photo" alt="" />
+          <div id="photo-loading">Loading</div>
+          <div id="photo-zoom-badge">⤢</div>
+        </div>
+
+        <div id="panel-meta">
+
+          <!-- Trivia prompt (shown while guessing) -->
+          <div id="prompt-box"></div>
+
+          <!-- Reveal (shown after guessing) -->
+          <div id="reveal-section" style="display:none">
+            <div id="item-name"></div>
+            <div id="item-answer"></div>
+            <div class="reveal-stats">
+              <span id="dist-display"></span>
+              <span id="round-score"></span>
+            </div>
+          </div>
+
+          <div id="score-bar">
+            <span class="score-label">Score</span>
+            <span class="score-val"><span id="total-score">0</span>&thinsp;/&thinsp;500</span>
+          </div>
+
+        </div>
+      </div><!-- /panel-upper -->
+
+      <div id="hint-box" style="display:none"></div>
+      <p id="item-fact" style="display:none"></p>
+
+      <div id="btn-row">
+        <button id="confirm-btn" class="game-btn" disabled onclick="confirmGuess()">Confirm Guess</button>
+        <button id="hint-btn" class="hint-btn" onclick="useHint()">Hint 1: Region · caps at 75 pts</button>
+        <button id="next-btn" class="game-btn" style="display:none" onclick="nextRound()">Next Round →</button>
+      </div>
+
+    </div><!-- /panel -->
+
+    <!-- Map -->
+    <div id="map-wrap">
+      <div id="globe-container"></div>
+      <div id="globe-hint">Tap the map to place your guess</div>
+    </div>
+
+  </div><!-- /game-screen -->
+
+  <!-- Splash / rules screen -->
+  <div id="splash-screen">
+    <div id="splash-card">
+      <h1>WhereInTheWorldCup</h1>
+      <p class="splash-tag">Five soccer trivia clues. One guess each. It starts easy and gets brutal — can you pin where the game's history happened?</p>
+
+      <ol class="splash-rules">
+        <li><b>Read the clue</b> — a famous match, stadium, player or manager.</li>
+        <li><b>Tap the map</b> to drop your guess where it happened, then hit Confirm.</li>
+        <li><b>Score by distance</b> — the closer you land, the more points, up to 100 per clue (500 total).</li>
+      </ol>
+
+      <div class="splash-hints">
+        <div class="splash-hints-title">Stuck? Take a hint — but each one caps your score:</div>
+        <div class="splash-hint-row"><span class="hint-tag">Region</span><span>Continent / area</span><span class="cap">max 75</span></div>
+        <div class="splash-hint-row"><span class="hint-tag">Country</span><span>The exact country</span><span class="cap">max 25</span></div>
+      </div>
+
+      <button id="play-btn" class="game-btn" onclick="startGame()">Kick Off Today's Round →</button>
+    </div>
+  </div>
+
+  <!-- Photo lightbox -->
+  <div id="photo-lightbox">
+    <div id="lightbox-stage">
+      <img id="lightbox-img" alt="Enlarged photo" />
+    </div>
+    <div id="lightbox-close" onclick="closePhoto(event)">✕</div>
+    <div id="lightbox-tip">Pinch · scroll · double-tap to zoom</div>
+  </div>
+
+  <!-- Summary screen -->
+  <div id="summary-screen">
+    <div id="summary-card">
+      <h1>WhereInTheWorldCup</h1>
+      <div id="final-score"></div>
+      <div id="result-msg"></div>
+      <div id="round-list"></div>
+      <div class="summary-btns">
+        <button id="share-btn" class="game-btn" onclick="shareResult()">Share Result</button>
+      </div>
+      <div id="already-played-msg">You've already played today — come back tomorrow!</div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="items.js"></script>
+  <script src="scoring.js"></script>
+  <script src="game.js"></script>
+
+  <script>
+    document.getElementById('map-wrap').addEventListener('pointerdown', () => {
+      const hint = document.getElementById('globe-hint');
+      if (hint) hint.style.opacity = '0';
+    }, { once: true });
+  </script>
+
+</body>
+</html>
