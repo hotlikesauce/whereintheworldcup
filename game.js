@@ -33,6 +33,39 @@ const CATEGORY_ICONS = {
 // Difficulty served per round: first two are gimmes, last two are tough.
 const DIFFICULTY_BY_ROUND = [1, 1, 2, 3, 3];
 
+// Rotating splash background — teams lifting the trophy through the years.
+// Swap these freely; for reliability prefer your own hosted files (e.g. images/*.jpg)
+// over hotlinked URLs, which can break or be referer-blocked.
+const SPLASH_IMAGES = [
+  'https://images.wsj.net/im-692986?width=1280&size=1',
+  'https://i0.wp.com/thesefootballtimes.co/wp-content/uploads/2017/03/maradona86.jpg?fit=1600%2C1053&ssl=1',
+  'https://images.wsj.net/im-688046?width=1280&size=1',
+  'https://i.guim.co.uk/img/media/74fe162839e316597767d91bfb136dfa01ab62fc/0_23_2048_1228/master/2048.jpg?width=1200&height=1200&quality=85&auto=format&fit=crop&s=af21139c0f7d4dce78da379391e07e51',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_t0RDolGODT-e0Dy_wmcLSg8VxwDAvFA54fmbrfIBmOEkxnD386oNHn4D&s=10',
+  'https://www.chicagotribune.com/wp-content/uploads/migration/2018/07/15/4CUNZ65YPRFOVDF5GKCMTHYMAU.jpg',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSRiYrj6thDCsyNAchlcAHN2boXOJ4T-ggMBOlVBAO6m4vxFgLPKevrj4yG&s=10',
+  'https://the18.com/sites/default/files/u100013226/20180225-The18-Image-Italy-2006.jpg',
+];
+
+function startSplashSlideshow() {
+  const bg = document.getElementById('splash-bg');
+  if (!bg || bg.childElementCount || !SPLASH_IMAGES.length) return;
+  const slides = SPLASH_IMAGES.map((url, i) => {
+    const s = document.createElement('div');
+    s.className = 'splash-slide' + (i === 0 ? ' on' : '');
+    s.style.backgroundImage = `url("${url}")`;
+    bg.appendChild(s);
+    return s;
+  });
+  if (slides.length < 2) return;
+  let i = 0;
+  setInterval(() => {
+    slides[i].classList.remove('on');
+    i = (i + 1) % slides.length;
+    slides[i].classList.add('on');
+  }, 5000);
+}
+
 // ── Daily seed ─────────────────────────────────────────────────────────────
 
 function getDateStrOffset(offset) {
@@ -811,5 +844,5 @@ function setupLightbox() {
   }, { passive: false });
 }
 
-function init2() { init(); setupLightbox(); }
+function init2() { init(); setupLightbox(); startSplashSlideshow(); }
 document.addEventListener('DOMContentLoaded', init2);

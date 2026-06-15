@@ -651,37 +651,67 @@ body.beta #round-badge { background: #6d28d9; }
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: var(--panel-bg);
+  background: var(--globe-bg);
   align-items: center;
   justify-content: center;
   overflow-y: auto;
   padding: 20px 16px;
 }
 
+/* Rotating photo background (teams lifting the trophy) */
+#splash-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: var(--globe-bg);
+}
+.splash-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+.splash-slide.on { opacity: 1; }
+#splash-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6,20,12,0.5) 0%, rgba(6,20,12,0.8) 60%, rgba(6,20,12,0.95) 100%);
+}
+
 #splash-card {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 440px;
+  max-width: 460px;
+  color: rgba(255,255,255,0.86);
 }
 
 #splash-card h1 {
   font-family: var(--condensed);
-  font-size: clamp(30px, 9vw, 44px);
+  font-size: clamp(32px, 9.5vw, 50px);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.01em;
-  color: var(--ink);
-  line-height: 1;
+  color: #fff;
+  line-height: 0.95;
   border-bottom: 3px solid var(--gold);
-  padding-bottom: 10px;
-  margin-bottom: 14px;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.55);
 }
+.logo-q   { color: var(--gold); }
+.logo-cup { color: #36d07f; }
 
 .splash-tag {
   font-family: var(--body);
   font-style: italic;
   font-size: 15px;
   line-height: 1.5;
-  color: var(--ink-mid);
+  color: rgba(255,255,255,0.82);
   margin-bottom: 22px;
 }
 
@@ -700,7 +730,7 @@ body.beta #round-badge { background: #6d28d9; }
   padding-left: 38px;
   font-size: 14px;
   line-height: 1.45;
-  color: var(--ink-mid);
+  color: rgba(255,255,255,0.82);
 }
 
 .splash-rules li::before {
@@ -719,11 +749,11 @@ body.beta #round-badge { background: #6d28d9; }
   border-radius: 50%;
 }
 
-.splash-rules b { color: var(--ink); }
+.splash-rules b { color: #fff; }
 
 .splash-hints {
-  background: rgba(11,138,67,0.08);
-  border: 1px solid rgba(11,138,67,0.35);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 6px;
   padding: 14px 16px;
   margin-bottom: 24px;
@@ -735,7 +765,7 @@ body.beta #round-badge { background: #6d28d9; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--ink);
+  color: #fff;
   margin-bottom: 10px;
 }
 
@@ -744,7 +774,7 @@ body.beta #round-badge { background: #6d28d9; }
   align-items: center;
   gap: 10px;
   font-size: 13px;
-  color: var(--ink-mid);
+  color: rgba(255,255,255,0.82);
   padding: 4px 0;
 }
 
@@ -756,9 +786,12 @@ body.beta #round-badge { background: #6d28d9; }
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--ink-dim);
+  color: rgba(255,255,255,0.6);
   white-space: nowrap;
 }
+
+#splash-card .beta-link { color: rgba(255,255,255,0.72); border-color: rgba(255,255,255,0.32); }
+#splash-card .beta-link:hover { color: #fff; border-color: #fff; }
 
 #play-btn {
   background: var(--pitch);
