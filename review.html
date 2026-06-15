@@ -106,7 +106,10 @@
     <option value="d3">Difficulty 3</option>
   </select>
   <button class="toolbtn" onclick="jumpNextUnreviewed()">Next unreviewed →</button>
-  <button class="toolbtn" onclick="openExport()">Export</button>
+  <button class="toolbtn" onclick="passAllShown()">✓ Pass all shown</button>
+  <button class="toolbtn" onclick="openExport()">Export flagged</button>
+  <button class="toolbtn" onclick="exportProgress()">Backup</button>
+  <label class="toolbtn" style="cursor:pointer">Restore<input type="file" accept="application/json" onchange="importProgress(this.files[0])" style="display:none"></label>
   <button class="toolbtn" onclick="resetAll()">Reset</button>
 </header>
 
@@ -182,9 +185,7 @@ function getRegionHint(country){
   const c = country.toLowerCase();
   if (/usa|canada|mexico|cuba|guatemala|panama|costa rica|honduras|nicaragua|belize|haiti|cura|jamaica|dominican|trinidad/.test(c)) return 'North or Central America';
   if (/peru|bolivia|chile|brazil|argentina|ecuador|colombia|venezuela|uruguay|paraguay|guiana|guyana|suriname/.test(c)) return 'South America';
-  if (/uk|united kingdom|england|scotland|wales|northern ireland|france|spain|italy|germany|greece|croatia|czech|hungary|poland|estonia|latvia|lithuania|austria|belgium|norway|sweden|finland|denmark|iceland|netherlands|portugal|switzerland|romania|bulgaria|montenegro|bosnia|north macedonia|serbia|slovenia|slovakia|ukraine|malta|ireland|vatican|luxembourg/.test(c)) return 'Europe';
-  if (/turkey|türkiye/.test(c)) return 'Turkey';
-  if (/russia/.test(c)) return 'Russia';
+  if (/uk|united kingdom|england|scotland|wales|northern ireland|france|spain|italy|germany|greece|croatia|czech|hungary|poland|estonia|latvia|lithuania|austria|belgium|norway|sweden|finland|denmark|iceland|netherlands|portugal|switzerland|romania|bulgaria|montenegro|bosnia|north macedonia|serbia|slovenia|slovakia|ukraine|malta|ireland|vatican|luxembourg|russia|turkey|türkiye/.test(c)) return 'Europe';
   if (/egypt|morocco|tunisia|algeria|libya|sudan|senegal|mali|ethiopia|kenya|tanzania|uganda|rwanda|zimbabwe|zambia|botswana|namibia|mozambique|madagascar|nigeria|ghana|ivory coast|cote|cameroon|cape verde|cabo verde|angola|south africa/.test(c)) return 'Africa';
   if (/jordan|israel|palestine|iran|iraq|saudi|united arab emirates|uae|qatar|oman|kuwait|bahrain|lebanon|syria|yemen/.test(c)) return 'the Middle East';
   if (/uzbekistan|kazakhstan|turkmenistan|tajikistan|kyrgyzstan/.test(c)) return 'Central Asia';
@@ -351,8 +352,27 @@ function downloadExport(){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='witwc-review.json'; a.click(); URL.revokeObjectURL(a.href);
 }
+function passAllShown(){
+  if(!view.length){ alert('Nothing shown to pass.'); return; }
+  if(!confirm(`Mark all ${view.length} shown question(s) as PASS?`)) return;
+  view.forEach(n=>{ const r=rec(ITEMS[n]); r.status='pass'; r.fixPrompt=false; r.fixCoords=false; r.fixDifficulty=false; r.note=''; });
+  save(); render();
+}
+function exportProgress(){
+  const blob=new Blob([JSON.stringify(results,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='witwc-review-backup.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+function importProgress(file){
+  if(!file) return;
+  const fr=new FileReader();
+  fr.onload=()=>{ try{ results=Object.assign(results||{}, JSON.parse(fr.result)); save(); applyFilter(); alert('Progress restored.'); }
+    catch(e){ alert('Could not read that backup file.'); } };
+  fr.readAsText(file);
+}
 function resetAll(){
-  if(!confirm('Clear ALL review decisions? This cannot be undone.')) return;
+  if(!confirm('Clear ALL review decisions? A backup file will download first.')) return;
+  exportProgress();   // safety net — never lose progress to Reset again
   results={}; save(); applyFilter();
 }
 

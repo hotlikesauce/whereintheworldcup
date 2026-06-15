@@ -153,7 +153,7 @@ const ITEMS = [
 
   { name: "Mohamed Salah", answer: "Nagrig, Egypt", country: "Egypt",
     category: "Player Birthplace", difficulty: 3, lat: 30.8460, lng: 30.9840, radius: 40,
-    prompt: "He scored twice at the 2018 World Cup as his nation reached the tournament for the first time in 28 years. Where was this prolific forward born?",
+    prompt: "He scored twice in 2018 as his nation reached the World Cup for the first time in 28 years. Where was this prolific forward born?",
     fact: "Salah funded much of his home village's development." },
 
   { name: "Didier Drogba", answer: "Abidjan, Ivory Coast", country: "Ivory Coast",
@@ -596,5 +596,47 @@ const ITEMS = [
     category: "World Cup Moment", difficulty: 3, lat: -32.8833, lng: -68.8500, radius: 10,
     prompt: "Archie Gemmill slalomed through the Dutch defence for one of the World Cup's greatest solo goals, for Scotland in 1978. Pick the host city.",
     fact: "Scotland won 3-2 but still went out on goal difference." },
+
+  // ════════ MORE WORLD CUP MOMENTS (batch 3 — famous matches) ════════
+
+  { name: "Frings' Uncalled Handball (2002)", answer: "Ulsan, South Korea", country: "South Korea",
+    category: "World Cup Moment", difficulty: 3, lat: 35.5556, lng: 129.2658, radius: 12,
+    prompt: "An uncalled handball on the line by a German defender denied the United States an equaliser in a 2002 World Cup quarterfinal. Pick the host city.",
+    fact: "Germany won 1-0 in Ulsan; Torsten Frings handled but no penalty was given." },
+
+  { name: "The Card-Fest of 2006", answer: "Nuremberg, Germany", country: "Germany",
+    category: "World Cup Moment", difficulty: 3, lat: 49.4521, lng: 11.0767, radius: 12,
+    prompt: "A referee brandished a record four red cards and sixteen yellows in a brutal Portugal–Netherlands knockout tie at the 2006 World Cup. Pick the host city.",
+    fact: "Portugal won 1-0; Valentin Ivanov's cards set a World Cup record (the 'Battle of Nuremberg')." },
+
+  { name: "Maxi's Extra-Time Volley (2006)", answer: "Leipzig, Germany", country: "Germany",
+    category: "World Cup Moment", difficulty: 3, lat: 51.3397, lng: 12.3731, radius: 12,
+    prompt: "Maxi Rodríguez thumped in a stunning extra-time volley to win a 2006 last-16 tie for Argentina against Mexico. Pick the host city.",
+    fact: "Argentina won 2-1 in Leipzig with one of the tournament's best goals." },
+
+  { name: "USA Stun Portugal Late (2014)", answer: "Manaus, Brazil", country: "Brazil",
+    category: "World Cup Moment", difficulty: 3, lat: -3.0834, lng: -60.0280, radius: 12,
+    prompt: "Silvestre Varela's last-gasp header earned Portugal a 2-2 draw with the United States at the 2014 World Cup. Pick the host city.",
+    fact: "The equaliser in the 95th minute came from a Cristiano Ronaldo cross, in remote Manaus." },
+
+  { name: "Croatia Oust the Hosts (2018)", answer: "Sochi, Russia", country: "Russia",
+    category: "World Cup Moment", difficulty: 3, lat: 43.4011, lng: 39.9566, radius: 12,
+    prompt: "Croatia knocked the host nation out on penalties in a 2018 World Cup quarterfinal. Pick the host city.",
+    fact: "Croatia won the shootout in Sochi and went all the way to the final." },
+
+  { name: "Totti's Last-Gasp Penalty (2006)", answer: "Kaiserslautern, Germany", country: "Germany",
+    category: "World Cup Moment", difficulty: 3, lat: 49.4344, lng: 7.7766, radius: 12,
+    prompt: "Francesco Totti buried a stoppage-time penalty to send Italy past Australia in the 2006 last 16, en route to the title. Pick the host city.",
+    fact: "Italy won 1-0 in Kaiserslautern and lifted the trophy weeks later." },
+
+  { name: "Ronaldinho Lobs Seaman (2002)", answer: "Shizuoka, Japan", country: "Japan",
+    category: "World Cup Moment", difficulty: 3, lat: 34.6586, lng: 137.9469, radius: 12,
+    prompt: "Ronaldinho floated an audacious free kick over England's goalkeeper to knock them out of the 2002 World Cup. Pick the host city.",
+    fact: "Brazil won 2-1; the free kick caught David Seaman off his line at Shizuoka." },
+
+  { name: "Lampard's Ghost Goal (2010)", answer: "Bloemfontein, South Africa", country: "South Africa",
+    category: "World Cup Moment", difficulty: 3, lat: -29.1172, lng: 26.2089, radius: 12,
+    prompt: "Frank Lampard's shot clearly crossed the line but went ungiven, in England's 4-1 loss to Germany at the 2010 World Cup. Pick the host city.",
+    fact: "Replays showed the ball a yard over the line in Bloemfontein; it hastened goal-line technology." },
 
 ];

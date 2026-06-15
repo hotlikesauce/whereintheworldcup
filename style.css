@@ -66,6 +66,52 @@ html, body {
 .badge-round { color: rgba(255,255,255,0.85); letter-spacing: 0.14em; }
 
 body.testing #round-badge { background: var(--red); }
+body.beta #round-badge { background: #6d28d9; }
+
+/* Beta entry + day navigation */
+.beta-link {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  margin: 12px auto 0;
+  padding: 9px;
+  background: transparent;
+  border: 1px dashed var(--border-dk);
+  border-radius: var(--radius);
+  font-family: var(--condensed);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+.beta-link:hover { border-color: #6d28d9; color: #6d28d9; }
+
+#beta-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  max-width: 480px;
+  margin: 12px auto 0;
+  padding: 0 24px;
+}
+#beta-nav button {
+  flex: 1;
+  min-width: 84px;
+  padding: 10px;
+  border: 1px solid #6d28d9;
+  border-radius: var(--radius);
+  background: #f3eefb;
+  color: #4c1d95;
+  font-family: var(--condensed);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+#beta-nav button:hover { background: #6d28d9; color: #fff; }
 
 #panel-upper {
   display: flex;

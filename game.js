@@ -6,6 +6,8 @@ const state = {
   distances: [],
   hintLevel: 0,
   testing: false,
+  beta: false,
+  betaOffset: 0,
   phase: 'guessing',
   map: null,
   guessMarker: null,
@@ -33,10 +35,13 @@ const DIFFICULTY_BY_ROUND = [1, 1, 2, 3, 3];
 
 // ── Daily seed ─────────────────────────────────────────────────────────────
 
-function getTodayStr() {
+function getDateStrOffset(offset) {
   const d = new Date();
+  if (offset) d.setDate(d.getDate() + offset);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+
+function getTodayStr() { return getDateStrOffset(0); }
 
 function hashSeed(str) {
   let h = 0;
@@ -86,9 +91,7 @@ function getRegionHint(country) {
   const c = country.toLowerCase();
   if (/usa|canada|mexico|cuba|guatemala|panama|costa rica|honduras|nicaragua|belize|haiti|cura|jamaica|dominican|trinidad/.test(c)) return 'North or Central America';
   if (/peru|bolivia|chile|brazil|argentina|ecuador|colombia|venezuela|uruguay|paraguay|guiana|guyana|suriname/.test(c)) return 'South America';
-  if (/uk|united kingdom|england|scotland|wales|northern ireland|france|spain|italy|germany|greece|croatia|czech|hungary|poland|estonia|latvia|lithuania|austria|belgium|norway|sweden|finland|denmark|iceland|netherlands|portugal|switzerland|romania|bulgaria|montenegro|bosnia|north macedonia|serbia|slovenia|slovakia|ukraine|malta|ireland|vatican|luxembourg/.test(c)) return 'Europe';
-  if (/turkey/.test(c))                                    return 'Turkey';
-  if (/russia/.test(c))                                    return 'Russia';
+  if (/uk|united kingdom|england|scotland|wales|northern ireland|france|spain|italy|germany|greece|croatia|czech|hungary|poland|estonia|latvia|lithuania|austria|belgium|norway|sweden|finland|denmark|iceland|netherlands|portugal|switzerland|romania|bulgaria|montenegro|bosnia|north macedonia|serbia|slovenia|slovakia|ukraine|malta|ireland|vatican|luxembourg|russia|turkey|türkiye/.test(c)) return 'Europe';
   if (/egypt|morocco|tunisia|algeria|libya|sudan|senegal|mali|ethiopia|kenya|tanzania|uganda|rwanda|zimbabwe|zambia|botswana|namibia|mozambique|madagascar|nigeria|ghana|ivory coast|cote|cameroon|cape verde|cabo verde|angola|south africa/.test(c)) return 'Africa';
   if (/jordan|israel|palestine|iran|iraq|saudi|united arab emirates|uae|qatar|oman|kuwait|bahrain|lebanon|syria|yemen/.test(c)) return 'the Middle East';
   if (/uzbekistan|kazakhstan|turkmenistan|tajikistan|kyrgyzstan/.test(c)) return 'Central Asia';
@@ -236,6 +239,7 @@ const COUNTRY_ALIASES = {
   'uk': 'United Kingdom', 'england': 'United Kingdom', 'scotland': 'United Kingdom',
   'wales': 'United Kingdom', 'northern ireland': 'United Kingdom',
   'ivory coast': "Côte d'Ivoire", 'korea': 'South Korea',
+  'czech republic': 'Czechia', 'cape verde': 'Cabo Verde',
 };
 
 function resolveCountryName(name) {
@@ -388,9 +392,12 @@ function startRound(i) {
   const item = state.items[i];
   const icon = CATEGORY_ICONS[item.category] || '⚽';
 
+  const roundTag = state.testing ? 'Test'
+                 : state.beta ? `Beta ${getDateStrOffset(state.betaOffset)} · ${i + 1}/${ROUNDS}`
+                 : `Round ${i + 1} / ${ROUNDS}`;
   document.getElementById('round-badge').innerHTML =
     `<span class="badge-cat">${icon} ${item.category}</span>` +
-    `<span class="badge-round">${state.testing ? 'Test' : `Round ${i + 1} / ${ROUNDS}`}</span>`;
+    `<span class="badge-round">${roundTag}</span>`;
 
   // Trivia prompt
   const promptBox = document.getElementById('prompt-box');
@@ -440,8 +447,11 @@ function confirmGuess() {
 
   const item      = state.items[state.round];
   const dist      = Scoring.haversineKm(state.guess.lat, state.guess.lng, item.lat, item.lng);
-  const inCountry = !!item.winCountry && pointInCountry(state.guess.lat, state.guess.lng, item.winCountry);
-  const rawScore  = inCountry ? 100 : Scoring.calcScore(dist, item.radius);
+  // Right country = a guaranteed floor (full 100 for "pin the country" items).
+  const target    = item.winCountry || item.country;
+  const inCountry = pointInCountry(state.guess.lat, state.guess.lng, target);
+  let rawScore    = (item.winCountry && inCountry) ? 100 : Scoring.calcScore(dist, item.radius);
+  if (inCountry) rawScore = Math.max(rawScore, Scoring.COUNTRY_FLOOR);
   const score     = Math.min(rawScore, Scoring.capForHints(state.hintLevel));
 
   state.distances.push(dist);
@@ -462,8 +472,11 @@ function confirmGuess() {
   const capNote = state.hintLevel > 0 ? ` (${state.hintLevel} hint${state.hintLevel > 1 ? 's' : ''})` : '';
   document.getElementById('item-name').textContent    = item.name;
   document.getElementById('item-answer').textContent  = item.answer;
+  const distText = Scoring.formatDist(dist);
   document.getElementById('dist-display').textContent =
-    inCountry ? `✓ In ${resolveCountryName(item.winCountry)}` : Scoring.formatDist(dist);
+    (item.winCountry && inCountry) ? `✓ ${item.country}`
+    : inCountry ? `${distText} · ✓ ${item.country}`
+    : distText;
   document.getElementById('round-score').textContent  = `+${score}${capNote}`;
   document.getElementById('total-score').textContent  = state.scores.reduce((a, b) => a + b, 0);
   document.getElementById('reveal-section').style.display = 'block';
@@ -497,17 +510,39 @@ function nextRound() {
 function showSummary() {
   const total = state.scores.reduce((a, b) => a + b, 0);
   const saved = {
-    date: getTodayStr(),
+    date: state.beta ? getDateStrOffset(state.betaOffset) : getTodayStr(),
     total,
     scores: state.scores,
     distances: state.distances,
     items: state.items.map(s => s.name),
   };
-  localStorage.setItem('witwc-daily', JSON.stringify(saved));
-  updateStats(total);
+  // Beta mode is throwaway — never touch the real daily result or stats.
+  if (!state.beta) {
+    localStorage.setItem('witwc-daily', JSON.stringify(saved));
+    updateStats(total);
+  }
   renderSummary(saved);
   document.getElementById('game-screen').style.display = 'none';
   document.getElementById('summary-screen').style.display = 'flex';
+}
+
+// ── Beta mode: play / replay any day's puzzle (no daily lock, no saving) ──────
+
+function startBeta(offset) {
+  state.beta = true;
+  state.testing = false;
+  state.betaOffset = offset || 0;
+  state.scores = [];
+  state.distances = [];
+  document.body.classList.add('beta');
+  document.getElementById('splash-screen').style.display = 'none';
+  document.getElementById('summary-screen').style.display = 'none';
+  document.getElementById('already-played-msg').style.display = 'none';
+  document.getElementById('game-screen').style.display = '';
+  const seed = hashSeed(getDateStrOffset(state.betaOffset));
+  state.items = pickDaily(ITEMS, seed);
+  state.map.invalidateSize();
+  startRound(0);
 }
 
 function renderSummary(saved) {
@@ -520,6 +555,11 @@ function renderSummary(saved) {
     pct >= 0.75 ? 'Top of the table!' :
     pct >= 0.5  ? 'Solid effort!' :
     pct >= 0.25 ? 'Mid-table finish' : 'Relegation battle!';
+
+  const betaNav = document.getElementById('beta-nav');
+  const betaEnter = document.getElementById('beta-enter');
+  if (betaNav)   betaNav.style.display   = state.beta ? 'flex'  : 'none';
+  if (betaEnter) betaEnter.style.display = state.beta ? 'none'  : 'block';
 
   const list = document.getElementById('round-list');
   list.innerHTML = '';

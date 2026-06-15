@@ -14,6 +14,10 @@ const Scoring = {
   // Stadiums and birthplaces are single points, so this gives a fair "right city" zone.
   DEFAULT_FREE_KM: 32,
 
+  // Guaranteed minimum if your guess lands inside the answer's country, however far
+  // from the exact point (still capped by hints).
+  COUNTRY_FLOOR: 50,
+
   // Full 100 inside the free radius (per-item override available), then halves
   // roughly every 1000 km beyond it.
   calcScore(distKm, freeKm) {

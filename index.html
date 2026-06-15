@@ -85,6 +85,7 @@
         <li><b>Read the clue</b> — a famous match, stadium, player or manager.</li>
         <li><b>Tap the map</b> to drop your guess where it happened, then hit Confirm.</li>
         <li><b>Score by distance</b> — the closer you land, the more points, up to 100 per clue (500 total).</li>
+        <li><b>Right country, +50 minimum</b> — land anywhere in the correct country and you're guaranteed at least 50 points, even if you're way off.</li>
       </ol>
 
       <div class="splash-hints">
@@ -94,6 +95,7 @@
       </div>
 
       <button id="play-btn" class="game-btn" onclick="startGame()">Kick Off Today's Round →</button>
+      <button id="beta-btn" class="beta-link" onclick="startBeta(0)">🧪 Beta — play &amp; replay any day</button>
     </div>
   </div>
 
@@ -117,6 +119,13 @@
         <button id="share-btn" class="game-btn" onclick="shareResult()">Share Result</button>
       </div>
       <div id="already-played-msg">You've already played today — come back tomorrow!</div>
+      <button id="beta-enter" class="beta-link" onclick="startBeta(0)">🧪 Beta — play &amp; replay any day</button>
+      <div id="beta-nav" style="display:none">
+        <button onclick="startBeta(state.betaOffset - 1)">← Earlier</button>
+        <button onclick="startBeta(state.betaOffset)">↻ Replay</button>
+        <button onclick="startBeta(state.betaOffset + 1)">Later →</button>
+        <button onclick="location.href = location.pathname">Exit beta</button>
+      </div>
     </div>
   </div>
 
