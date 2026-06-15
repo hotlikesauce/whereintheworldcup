@@ -679,7 +679,7 @@ body.beta #round-badge { background: #6d28d9; }
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(6,20,12,0.5) 0%, rgba(6,20,12,0.8) 60%, rgba(6,20,12,0.95) 100%);
+  background: linear-gradient(180deg, rgba(6,20,12,0.22) 0%, rgba(6,20,12,0.42) 45%, rgba(6,20,12,0.9) 100%);
 }
 
 #splash-card {
@@ -692,10 +692,11 @@ body.beta #round-badge { background: #6d28d9; }
 
 #splash-card h1 {
   font-family: var(--condensed);
-  font-size: clamp(32px, 9.5vw, 50px);
+  font-size: clamp(20px, 6.6vw, 42px);
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
+  white-space: nowrap;
   color: #fff;
   line-height: 0.95;
   border-bottom: 3px solid var(--gold);
@@ -711,8 +712,9 @@ body.beta #round-badge { background: #6d28d9; }
   font-style: italic;
   font-size: 15px;
   line-height: 1.5;
-  color: rgba(255,255,255,0.82);
+  color: rgba(255,255,255,0.9);
   margin-bottom: 22px;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.8);
 }
 
 .splash-rules {
@@ -730,7 +732,8 @@ body.beta #round-badge { background: #6d28d9; }
   padding-left: 38px;
   font-size: 14px;
   line-height: 1.45;
-  color: rgba(255,255,255,0.82);
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.8);
 }
 
 .splash-rules li::before {
@@ -752,11 +755,12 @@ body.beta #round-badge { background: #6d28d9; }
 .splash-rules b { color: #fff; }
 
 .splash-hints {
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(6,20,12,0.55);
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 6px;
   padding: 14px 16px;
   margin-bottom: 24px;
+  backdrop-filter: blur(2px);
 }
 
 .splash-hints-title {
