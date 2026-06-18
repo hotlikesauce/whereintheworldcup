@@ -95,27 +95,58 @@ function makeRng(seed) {
   };
 }
 
-// Pick one item per round following DIFFICULTY_BY_ROUND. If a difficulty bucket
-// runs dry, fall back to the nearest available difficulty so we always fill 5.
-function pickDaily(items, seed) {
-  const rng = makeRng(seed);
-  const byDiff = { 1: [], 2: [], 3: [] };
-  items.forEach(it => { (byDiff[it.difficulty] || byDiff[2]).push(it); });
+// ── Non-repeating daily schedule ─────────────────────────────────────────────
+// Each difficulty pool is shuffled ONCE with a fixed seed (so the order is the
+// same for every player), then consumed in sequence day after day. A question
+// therefore won't reappear until its whole difficulty pool has been used up —
+// no more "same questions every day". Day 0 = SCHEDULE_EPOCH.
+const SCHEDULE_EPOCH = '2026-06-12';
 
-  const used = new Set();
-  const usedLoc = new Set();   // avoid two questions at the same place in one day
-  const locKey = it => `${it.lat.toFixed(1)},${it.lng.toFixed(1)}`;
-  const result = [];
-  for (const diff of DIFFICULTY_BY_ROUND) {
-    const order = [diff, diff + 1, diff - 1, diff + 2, diff - 2];
-    let picked = null;
-    for (const d of order) {
-      const pool = (byDiff[d] || []).filter(it => !used.has(it) && !usedLoc.has(locKey(it)));
-      if (pool.length) { picked = pool[rng() % pool.length]; break; }
-    }
-    if (picked) { used.add(picked); usedLoc.add(locKey(picked)); result.push(picked); }
+function shuffleSeeded(arr, seed) {
+  const a = arr.slice();
+  const rng = makeRng(seed);
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = rng() % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  return result;
+  return a;
+}
+
+function dayIndexFor(dateStr) {
+  const ms = new Date(dateStr + 'T00:00:00') - new Date(SCHEDULE_EPOCH + 'T00:00:00');
+  return Math.max(0, Math.floor(ms / 86400000));
+}
+
+// Returns the 5 items for a given day index. Each difficulty stream is consumed
+// continuously across days (skips included), so a question never repeats until
+// its whole pool has cycled — and never on back-to-back days.
+function dailyItems(dayIndex) {
+  const byDiff = { 1: [], 2: [], 3: [] };
+  ITEMS.forEach(it => { (byDiff[it.difficulty] || byDiff[2]).push(it); });
+  const queues = {
+    1: shuffleSeeded(byDiff[1], 917501),
+    2: shuffleSeeded(byDiff[2], 917502),
+    3: shuffleSeeded(byDiff[3], 917503),
+  };
+  const locKey = it => `${it.lat.toFixed(1)},${it.lng.toFixed(1)}`;
+  const cursor = { 1: 0, 2: 0, 3: 0 };
+  let picks = [];
+  for (let day = 0; day <= dayIndex; day++) {
+    picks = [];
+    const usedLoc = new Set();
+    for (const diff of DIFFICULTY_BY_ROUND) {
+      const q = queues[diff].length ? queues[diff] : queues[2];
+      let chosen = null, steps = 1;
+      for (let k = 0; k < q.length; k++) {
+        const cand = q[(cursor[diff] + k) % q.length];
+        if (!picks.includes(cand) && !usedLoc.has(locKey(cand))) { chosen = cand; steps = k + 1; break; }
+      }
+      if (!chosen) chosen = q[cursor[diff] % q.length];
+      cursor[diff] += steps;
+      picks.push(chosen); usedLoc.add(locKey(chosen));
+    }
+  }
+  return picks;
 }
 
 // ── Hints ────────────────────────────────────────────────────────────────
@@ -572,11 +603,13 @@ function startBeta(offset) {
   document.getElementById('summary-screen').style.display = 'none';
   document.getElementById('already-played-msg').style.display = 'none';
   document.getElementById('game-screen').style.display = '';
-  const seed = hashSeed(getDateStrOffset(state.betaOffset));
-  state.items = pickDaily(ITEMS, seed);
+  state.items = dailyItems(dayIndexFor(getDateStrOffset(state.betaOffset)));
   state.map.invalidateSize();
   startRound(0);
 }
+
+// Jump to a random scheduled day — handy for beta-testing lots of questions fast.
+function betaRandom() { startBeta(Math.floor(Math.random() * 400)); }
 
 function renderSummary(saved) {
   const max = ROUNDS * 100;
@@ -665,8 +698,7 @@ function init() {
   setupMap();
   setupTestToggle();
 
-  const seed = hashSeed(getTodayStr());
-  state.items = pickDaily(ITEMS, seed);
+  state.items = dailyItems(dayIndexFor(getTodayStr()));
 
   if (location.hash === '#test') { enterTestMode(); return; }
 

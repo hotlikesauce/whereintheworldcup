@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
 
@@ -98,7 +98,7 @@
       </div>
 
       <button id="play-btn" class="game-btn" onclick="startGame()">Kick Off Today's Round →</button>
-      <button id="beta-btn" class="beta-link" onclick="startBeta(0)">🧪 Beta — play &amp; replay any day</button>
+      <button id="beta-btn" class="beta-link" onclick="betaRandom()">🧪 Beta — play a random day</button>
     </div>
   </div>
 
@@ -122,20 +122,20 @@
         <button id="share-btn" class="game-btn" onclick="shareResult()">Share Result</button>
       </div>
       <div id="already-played-msg">You've already played today — come back tomorrow!</div>
-      <button id="beta-enter" class="beta-link" onclick="startBeta(0)">🧪 Beta — play &amp; replay any day</button>
+      <button id="beta-enter" class="beta-link" onclick="betaRandom()">🧪 Beta — play a random day</button>
       <div id="beta-nav" style="display:none">
-        <button onclick="startBeta(state.betaOffset - 1)">← Earlier</button>
+        <button onclick="betaRandom()">🎲 Random day</button>
         <button onclick="startBeta(state.betaOffset)">↻ Replay</button>
-        <button onclick="startBeta(state.betaOffset + 1)">Later →</button>
+        <button onclick="startBeta(state.betaOffset + 1)">Next →</button>
         <button onclick="location.href = location.pathname">Exit beta</button>
       </div>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="items.js"></script>
-  <script src="scoring.js"></script>
-  <script src="game.js"></script>
+  <script src="items.js?v=3"></script>
+  <script src="scoring.js?v=3"></script>
+  <script src="game.js?v=3"></script>
 
   <script>
     document.getElementById('map-wrap').addEventListener('pointerdown', () => {
