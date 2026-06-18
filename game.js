@@ -13,6 +13,7 @@ const state = {
   guessMarker: null,
   targetMarker: null,
   revealLine: null,
+  countryLayer: null,
 };
 
 const ROUNDS = 5;
@@ -240,6 +241,7 @@ function clearReveal() {
   if (state.guessMarker)  { state.guessMarker.remove();  state.guessMarker  = null; }
   if (state.targetMarker) { state.targetMarker.remove(); state.targetMarker = null; }
   if (state.revealLine)   { state.revealLine.remove();   state.revealLine   = null; }
+  if (state.countryLayer) { state.countryLayer.remove(); state.countryLayer = null; }
 }
 
 // Guess pin = a little soccer ball; target = gold flag pin.
@@ -300,8 +302,7 @@ const boundaries = {
 
 const COUNTRY_ALIASES = {
   'usa': 'United States of America', 'united states': 'United States of America',
-  'uk': 'United Kingdom', 'england': 'United Kingdom', 'scotland': 'United Kingdom',
-  'wales': 'United Kingdom', 'northern ireland': 'United Kingdom',
+  'uk': 'United Kingdom',
   'ivory coast': "Côte d'Ivoire", 'korea': 'South Korea',
   'czech republic': 'Czechia', 'cape verde': 'Cabo Verde',
 };
@@ -356,6 +357,28 @@ function pointInCountry(lat, lng, countryName) {
   return false;
 }
 
+// Find a country's GeoJSON feature (high-res subset first, then rendering layer).
+function countryFeature(countryName) {
+  const target = resolveCountryName(countryName).toLowerCase();
+  for (const src of [boundaries.winFeatures, boundaries.countryFeatures]) {
+    if (!src) continue;
+    const f = src.find(ft => ((ft.properties && ft.properties.n) || '').toLowerCase() === target);
+    if (f) return f;
+  }
+  return null;
+}
+
+// Draw a glowing fill over a whole country (used for "pin the country" reveals).
+function highlightCountry(countryName) {
+  const f = countryFeature(countryName);
+  if (!f) return null;
+  return L.geoJSON(f, {
+    style: { color: '#22c55e', weight: 2.5, opacity: 0.95, fillColor: '#22c55e', fillOpacity: 0.3 },
+    interactive: false,
+    renderer: L.canvas({ padding: 0.5 }),
+  }).addTo(state.map);
+}
+
 function featureBox(feature) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   (function scan(c) {
@@ -382,11 +405,10 @@ function countryAbbr(f) {
 async function loadBoundaries() {
   boundaries.labelGroup = L.layerGroup().addTo(state.map);
 
-  // High-res polygons (NE 50m subset) for the "anywhere in country wins" check.
-  try {
-    const r = await fetch('geo/win-countries.geojson');
-    boundaries.winFeatures = (await r.json()).features;
-  } catch (e) { console.warn('win-countries load failed', e); }
+  // High-res polygons (NE 50m subset incl. England/Scotland/Wales) for the
+  // country-win check + boundary highlight. Loaded inline via geo/win-countries.js
+  // so it works on file:// too (browsers block fetch() of local files).
+  if (window.WIN_COUNTRIES) boundaries.winFeatures = window.WIN_COUNTRIES.features;
 
   try {
     const countries = await fetchGeo('countries');
@@ -522,12 +544,29 @@ function confirmGuess() {
   state.scores.push(score);
 
   const color = scoreToColor(score);
-  const gcPts = greatCircle(state.guess.lat, state.guess.lng, item.lat, item.lng);
-  state.revealLine   = L.polyline(gcPts, { color, weight: 2.5, opacity: 0.9 }).addTo(state.map);
-  state.targetMarker = L.marker([item.lat, item.lng], { icon: TARGET_ICON() }).addTo(state.map);
-
-  const bounds = L.latLngBounds([[state.guess.lat, state.guess.lng], [item.lat, item.lng]]);
-  state.map.fitBounds(bounds, { padding: [60, 60], maxZoom: 8, animate: true });
+  if (item.winCountry) {
+    // "Pin the country" — light up the country boundary instead of a distance line.
+    state.countryLayer = highlightCountry(item.winCountry);
+    if (inCountry) {
+      // Correct country: just the glowing boundary — no line, no target pin.
+      if (state.countryLayer) state.map.fitBounds(state.countryLayer.getBounds(), { padding: [50, 50], maxZoom: 6, animate: true });
+      else state.map.setView([item.lat, item.lng], 4);
+    } else {
+      // Wrong country: show where it was, with a line from the guess.
+      state.revealLine = L.polyline(greatCircle(state.guess.lat, state.guess.lng, item.lat, item.lng),
+        { color, weight: 2.5, opacity: 0.9 }).addTo(state.map);
+      const b = (state.countryLayer ? state.countryLayer.getBounds()
+                                    : L.latLngBounds([[item.lat, item.lng], [item.lat, item.lng]]))
+                .extend([state.guess.lat, state.guess.lng]);
+      state.map.fitBounds(b, { padding: [50, 50], maxZoom: 7, animate: true });
+    }
+  } else {
+    state.revealLine   = L.polyline(greatCircle(state.guess.lat, state.guess.lng, item.lat, item.lng),
+      { color, weight: 2.5, opacity: 0.9 }).addTo(state.map);
+    state.targetMarker = L.marker([item.lat, item.lng], { icon: TARGET_ICON() }).addTo(state.map);
+    const bounds = L.latLngBounds([[state.guess.lat, state.guess.lng], [item.lat, item.lng]]);
+    state.map.fitBounds(bounds, { padding: [60, 60], maxZoom: 8, animate: true });
+  }
 
   document.getElementById('hint-btn').style.display = 'none';
   document.getElementById('hint-box').style.display = 'none';
